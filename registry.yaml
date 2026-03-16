@@ -13,19 +13,55 @@ maintainer: Jonathan Boshoff
 url: https://github.com/boshify/ai-seo-agent-skills
 academy: https://www.skool.com/ai-seo
 
-skills: []
+skills:
+  - name: ai-seo-engine
+    path: ai-seo-engine-skills/SKILL.md
+    version: "1.0"
+    description: >
+      Programmatic access to AI SEO Engine via the aise CLI. Manage SEO projects,
+      generate AI content, retrieve deliverables from Google Drive, and chain to CMS publishing.
+    inputs: [aise-api-key, project-id]
+    outputs: [cli-output]
+    chains_from: []
+    chains_to: [cms-wordpress, cms-webflow, cms-shopify]
+    tools_used: [aise-cli, gws-cli, curl, jq]
+    tags: [seo, content-generation, ai, cli, google-drive]
 
-# Example entry (uncomment and modify when adding first skill):
-#
-#   - name: skill-name-here
-#     path: skill-name-here/SKILL.md
-#     version: "1.0"
-#     description: >
-#       What this skill does in one sentence. When to use it.
-#       What it produces.
-#     inputs: [input-label-1, input-label-2]
-#     outputs: [output-label]
-#     chains_from: []
-#     chains_to: []
-#     tools_used: []
-#     tags: [seo, relevant-tag]
+  - name: cms-wordpress
+    path: cms-skills/wordpress/SKILL.md
+    version: "1.0"
+    description: >
+      Publish content to WordPress via WP-CLI or REST API. Handles posts, media upload,
+      featured images, categories, tags, and SEO metadata (Yoast/RankMath).
+    inputs: [wordpress-url, wordpress-credentials, html-content]
+    outputs: [published-post-url]
+    chains_from: [ai-seo-engine]
+    chains_to: []
+    tools_used: [curl, wp-cli, jq]
+    tags: [cms, wordpress, publishing, seo]
+
+  - name: cms-webflow
+    path: cms-skills/webflow/SKILL.md
+    version: "1.0"
+    description: >
+      Publish content to Webflow CMS collections via API v2. Handles collection item creation,
+      publishing, SEO metadata, and rich text content. Schema-first approach.
+    inputs: [webflow-api-token, collection-id, html-content]
+    outputs: [published-item-url]
+    chains_from: [ai-seo-engine]
+    chains_to: []
+    tools_used: [curl, jq]
+    tags: [cms, webflow, publishing, seo]
+
+  - name: cms-shopify
+    path: cms-skills/shopify/SKILL.md
+    version: "1.0"
+    description: >
+      Publish blog articles and pages to Shopify via Admin REST API. Handles content creation,
+      featured images, SEO metafields (title_tag, description_tag), and scheduling.
+    inputs: [shopify-store-url, shopify-access-token, html-content]
+    outputs: [published-article-url]
+    chains_from: [ai-seo-engine]
+    chains_to: []
+    tools_used: [curl, jq]
+    tags: [cms, shopify, publishing, seo, ecommerce]

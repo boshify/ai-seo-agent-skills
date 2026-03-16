@@ -36,7 +36,7 @@ Read [`registry.yaml`](registry.yaml) to find the right skill without scanning e
 **Raw URL pattern:**
 ```
 https://raw.githubusercontent.com/boshify/ai-seo-agent-skills/main/registry.yaml
-https://raw.githubusercontent.com/boshify/ai-seo-agent-skills/main/{skill-name}/SKILL.md
+https://raw.githubusercontent.com/boshify/ai-seo-agent-skills/main/{skill-path}
 ```
 
 The registry is intentionally denormalized — each entry contains enough information to make a selection decision without fetching any SKILL.md files. One read, one decision, one fetch.
@@ -65,7 +65,10 @@ Every skill works standalone. Clone the whole repo or just grab the SKILL.md for
 
 | Skill | What It Does |
 |-------|-------------|
-| *Coming soon* | First skills shipping shortly |
+| [ai-seo-engine](ai-seo-engine-skills/SKILL.md) | Programmatic access to AI SEO Engine — manage projects, generate content, retrieve deliverables from Google Drive |
+| [cms-wordpress](cms-skills/wordpress/SKILL.md) | Publish content to WordPress via WP-CLI or REST API with SEO metadata |
+| [cms-webflow](cms-skills/webflow/SKILL.md) | Publish content to Webflow CMS collections via API v2 |
+| [cms-shopify](cms-skills/shopify/SKILL.md) | Publish blog articles and pages to Shopify via Admin REST API |
 
 ---
 
