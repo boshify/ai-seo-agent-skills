@@ -76,7 +76,7 @@ wp user list --format=json | jq '.[0].user_login'
 ```bash
 # Test authentication with Application Password
 curl -s https://yoursite.com/wp-json/wp/v2/users/me \
-  -u "username:xxxx xxxx xxxx xxxx" | jq .name
+  -u "$WP_USER:$WP_APP_PASSWORD" | jq .name
 ```
 
 **Output:** Confirmed authentication — username and access level.
@@ -109,11 +109,11 @@ wp term list post_tag --format=json
 ```bash
 # List existing categories
 curl -s https://yoursite.com/wp-json/wp/v2/categories \
-  -u "user:pass" | jq '.[] | {id, name}'
+  -u "$WP_USER:$WP_APP_PASSWORD" | jq '.[] | {id, name}'
 
 # Create a new category
 curl -s -X POST https://yoursite.com/wp-json/wp/v2/categories \
-  -u "user:pass" \
+  -u "$WP_USER:$WP_APP_PASSWORD" \
   -H "Content-Type: application/json" \
   -d '{"name": "SEO Tips"}' | jq '{id, name}'
 ```
@@ -145,7 +145,7 @@ wp media import https://example.com/image.jpg --post_id=123 --featured_image
 ```bash
 # Upload image file
 curl -s -X POST https://yoursite.com/wp-json/wp/v2/media \
-  -u "user:pass" \
+  -u "$WP_USER:$WP_APP_PASSWORD" \
   -H "Content-Disposition: attachment; filename=featured-image.jpg" \
   -H "Content-Type: image/jpeg" \
   --data-binary @featured-image.jpg | jq '{id, source_url}'
@@ -223,7 +223,7 @@ wp post term set 123 post_tag "seo" "content-marketing"
 *REST API — Create:*
 ```bash
 curl -s -X POST https://yoursite.com/wp-json/wp/v2/posts \
-  -u "user:pass" \
+  -u "$WP_USER:$WP_APP_PASSWORD" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Your SEO-Optimized Title",
@@ -238,7 +238,7 @@ curl -s -X POST https://yoursite.com/wp-json/wp/v2/posts \
 *REST API — Update:*
 ```bash
 curl -s -X PUT https://yoursite.com/wp-json/wp/v2/posts/123 \
-  -u "user:pass" \
+  -u "$WP_USER:$WP_APP_PASSWORD" \
   -H "Content-Type: application/json" \
   -d '{
     "content": "<p>Updated HTML content...</p>"
@@ -276,7 +276,7 @@ wp post meta update 123 rank_math_focus_keyword "target keyword"
 *REST API — Yoast SEO (via post meta):*
 ```bash
 curl -s -X PUT https://yoursite.com/wp-json/wp/v2/posts/123 \
-  -u "user:pass" \
+  -u "$WP_USER:$WP_APP_PASSWORD" \
   -H "Content-Type: application/json" \
   -d '{
     "meta": {
@@ -290,7 +290,7 @@ curl -s -X PUT https://yoursite.com/wp-json/wp/v2/posts/123 \
 *REST API — RankMath SEO (via post meta):*
 ```bash
 curl -s -X PUT https://yoursite.com/wp-json/wp/v2/posts/123 \
-  -u "user:pass" \
+  -u "$WP_USER:$WP_APP_PASSWORD" \
   -H "Content-Type: application/json" \
   -d '{
     "meta": {
@@ -326,18 +326,18 @@ wp post meta get 123 _yoast_wpseo_title
 *REST API:*
 ```bash
 curl -s https://yoursite.com/wp-json/wp/v2/posts/123 \
-  -u "user:pass" | jq '{id, title: .title.rendered, status, link, categories, tags, featured_media}'
+  -u "$WP_USER:$WP_APP_PASSWORD" | jq '{id, title: .title.rendered, status, link, categories, tags, featured_media}'
 ```
 
 *Search for posts:*
 ```bash
 # List recent posts
 curl -s "https://yoursite.com/wp-json/wp/v2/posts?per_page=20&status=publish" \
-  -u "user:pass" | jq '.[] | {id, title: .title.rendered, link}'
+  -u "$WP_USER:$WP_APP_PASSWORD" | jq '.[] | {id, title: .title.rendered, link}'
 
 # Search by keyword
 curl -s "https://yoursite.com/wp-json/wp/v2/posts?search=keyword" \
-  -u "user:pass" | jq '.[] | {id, title: .title.rendered, link}'
+  -u "$WP_USER:$WP_APP_PASSWORD" | jq '.[] | {id, title: .title.rendered, link}'
 ```
 
 **Output:** Final confirmation with post URL and all metadata.
@@ -395,17 +395,17 @@ curl -s "https://yoursite.com/wp-json/wp/v2/posts?search=keyword" \
 ```bash
 # 1. Verify access
 curl -s https://myblog.com/wp-json/wp/v2/users/me \
-  -u "editor:abcd efgh ijkl mnop" | jq .name
+  -u "$WP_USER:$WP_APP_PASSWORD" | jq .name
 # => "Editor User"
 
 # 2. Get/create category
 curl -s https://myblog.com/wp-json/wp/v2/categories \
-  -u "editor:abcd efgh ijkl mnop" | jq '.[] | select(.name == "SEO Tips") | .id'
+  -u "$WP_USER:$WP_APP_PASSWORD" | jq '.[] | select(.name == "SEO Tips") | .id'
 # => 5
 
 # 3. Upload featured image
 curl -s -X POST https://myblog.com/wp-json/wp/v2/media \
-  -u "editor:abcd efgh ijkl mnop" \
+  -u "$WP_USER:$WP_APP_PASSWORD" \
   -H "Content-Disposition: attachment; filename=hero.jpg" \
   -H "Content-Type: image/jpeg" \
   --data-binary @hero.jpg | jq .id
@@ -413,7 +413,7 @@ curl -s -X POST https://myblog.com/wp-json/wp/v2/media \
 
 # 4. Create post
 curl -s -X POST https://myblog.com/wp-json/wp/v2/posts \
-  -u "editor:abcd efgh ijkl mnop" \
+  -u "$WP_USER:$WP_APP_PASSWORD" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "10 On-Page SEO Tips for 2026",
@@ -427,7 +427,7 @@ curl -s -X POST https://myblog.com/wp-json/wp/v2/posts \
 
 # 5. Set Yoast metadata
 curl -s -X PUT https://myblog.com/wp-json/wp/v2/posts/1234 \
-  -u "editor:abcd efgh ijkl mnop" \
+  -u "$WP_USER:$WP_APP_PASSWORD" \
   -H "Content-Type: application/json" \
   -d '{
     "meta": {

@@ -113,13 +113,13 @@ gws drive files get --params '{"fileId": "img_456"}' --download > featured.jpg
 
 # Publish to WordPress (see ../cms-skills/wordpress.md for full details)
 MEDIA_ID=$(curl -s -X POST https://yoursite.com/wp-json/wp/v2/media \
-  -u "user:app_pass" \
+  -u "$WP_USER:$WP_APP_PASSWORD" \
   -H "Content-Disposition: attachment; filename=featured.jpg" \
   -H "Content-Type: image/jpeg" \
   --data-binary @featured.jpg | jq '.id')
 
 curl -X POST https://yoursite.com/wp-json/wp/v2/posts \
-  -u "user:app_pass" \
+  -u "$WP_USER:$WP_APP_PASSWORD" \
   -H "Content-Type: application/json" \
   -d "{
     \"title\": \"Article Title\",
@@ -164,7 +164,7 @@ for IMG_FILE in *.jpg *.png *.webp; do
   MIME=$(file --mime-type -b "$IMG_FILE")
 
   curl -s -X POST https://yoursite.com/wp-json/wp/v2/media \
-    -u "user:app_pass" \
+    -u "$WP_USER:$WP_APP_PASSWORD" \
     -H "Content-Disposition: attachment; filename=${IMG_FILE}" \
     -H "Content-Type: ${MIME}" \
     --data-binary @"$IMG_FILE" | jq '{id, source_url}'

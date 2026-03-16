@@ -163,7 +163,7 @@ gws drive files get --params '{"fileId": "img_id"}' --download > featured.jpg
 # 3. Publish to CMS (see ../cms-skills/)
 # WordPress example:
 curl -X POST https://yoursite.com/wp-json/wp/v2/posts \
-  -u "user:app_password" \
+  -u "$WP_USER:$WP_APP_PASSWORD" \
   -H "Content-Type: application/json" \
   -d "{\"title\": \"Best SEO Tools 2026\", \"content\": $(jq -Rs . < article.html), \"status\": \"publish\"}"
 ```
