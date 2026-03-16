@@ -35,8 +35,8 @@ Read [`registry.yaml`](registry.yaml) to find the right skill without scanning e
 
 **Raw URL pattern:**
 ```
-https://raw.githubusercontent.com/jonathanboshoff/ai-seo-agent-skills/main/registry.yaml
-https://raw.githubusercontent.com/jonathanboshoff/ai-seo-agent-skills/main/{skill-name}/SKILL.md
+https://raw.githubusercontent.com/boshify/ai-seo-agent-skills/main/registry.yaml
+https://raw.githubusercontent.com/boshify/ai-seo-agent-skills/main/{skill-name}/SKILL.md
 ```
 
 The registry is intentionally denormalized — each entry contains enough information to make a selection decision without fetching any SKILL.md files. One read, one decision, one fetch.
@@ -46,7 +46,7 @@ The registry is intentionally denormalized — each entry contains enough inform
 ## For Humans: Browse, Clone, Modify
 
 ```bash
-git clone https://github.com/jonathanboshoff/ai-seo-agent-skills.git
+git clone https://github.com/boshify/ai-seo-agent-skills.git
 ```
 
 Every skill works standalone. Clone the whole repo or just grab the SKILL.md for the one you need. Modify freely — these are MIT licensed.

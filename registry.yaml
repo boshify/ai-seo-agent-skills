@@ -6,11 +6,11 @@
 #
 # Update whenever a skill is added, renamed, or removed.
 #
-# Raw URL: https://raw.githubusercontent.com/jonathanboshoff/ai-seo-agent-skills/main/registry.yaml
+# Raw URL: https://raw.githubusercontent.com/boshify/ai-seo-agent-skills/main/registry.yaml
 
 repo: ai-seo-agent-skills
 maintainer: Jonathan Boshoff
-url: https://github.com/jonathanboshoff/ai-seo-agent-skills
+url: https://github.com/boshify/ai-seo-agent-skills
 academy: https://www.skool.com/ai-seo
 
 skills: []
