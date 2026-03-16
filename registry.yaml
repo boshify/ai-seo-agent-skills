@@ -1,0 +1,31 @@
+# registry.yaml — Skill Discovery Index
+#
+# Agents read this FIRST to find the right skill without scanning every directory.
+# Each entry contains enough information to make a selection decision without
+# fetching any SKILL.md files. One read, one decision, one fetch.
+#
+# Update whenever a skill is added, renamed, or removed.
+#
+# Raw URL: https://raw.githubusercontent.com/jonathanboshoff/ai-seo-agent-skills/main/registry.yaml
+
+repo: ai-seo-agent-skills
+maintainer: Jonathan Boshoff
+url: https://github.com/jonathanboshoff/ai-seo-agent-skills
+academy: https://www.skool.com/ai-seo
+
+skills: []
+
+# Example entry (uncomment and modify when adding first skill):
+#
+#   - name: skill-name-here
+#     path: skill-name-here/SKILL.md
+#     version: "1.0"
+#     description: >
+#       What this skill does in one sentence. When to use it.
+#       What it produces.
+#     inputs: [input-label-1, input-label-2]
+#     outputs: [output-label]
+#     chains_from: []
+#     chains_to: []
+#     tools_used: []
+#     tags: [seo, relevant-tag]
