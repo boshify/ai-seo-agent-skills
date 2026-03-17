@@ -24,10 +24,10 @@ outputs:
     label: "cli-output"
     description: "JSON responses from aise CLI commands"
 
-tools_used: [aise-cli, gws-cli, curl, jq]
+tools_used: [aise-cli, mcp-server, gws-cli, curl, jq]
 chains_from: []
 chains_to: [cms-wordpress, cms-webflow, cms-shopify]
-tags: [seo, content-generation, ai, cli, google-drive]
+tags: [seo, content-generation, ai, cli, mcp, google-drive]
 ---
 
 # AI SEO Engine — Agent Skills
@@ -35,6 +35,16 @@ tags: [seo, content-generation, ai, cli, google-drive]
 AI SEO Engine is an AI-powered SEO content platform. This skills library teaches agents how to use it programmatically via the `aise` CLI.
 
 ## Quick Start
+
+### Option A: MCP (for AI chat interfaces)
+
+Connect directly from Claude, Cursor, or any MCP-compatible tool — no installation needed.
+
+- **MCP URL**: `https://aiseoengine.studio/api/mcp`
+- **Auth**: Bearer token with your `AISE_API_KEY`
+- **Setup guide**: [mcp-setup.md](./mcp-setup.md)
+
+### Option B: CLI (for scripts and automation)
 
 ```bash
 # 1. Install
@@ -75,6 +85,7 @@ All commands output JSON by default. Add `--pretty` for formatted output.
 | [cli-reference.md](./cli-reference.md) | Complete command reference with examples |
 | [workflows.md](./workflows.md) | Step-by-step workflow recipes |
 | [google-workspace.md](./google-workspace.md) | Google Drive/Docs/Sheets integration via `gws` |
+| [mcp-setup.md](./mcp-setup.md) | MCP server setup for Claude, Cursor, and other AI tools |
 | [troubleshooting.md](./troubleshooting.md) | Common errors and fixes |
 
 ## CMS Publishing
@@ -87,5 +98,7 @@ After generating content, publish it to your CMS using the [CMS Skills](../cms-s
 ## Links
 
 - **Web App**: https://aiseoengine.studio
+- **MCP Server**: https://aiseoengine.studio/api/mcp
+- **MCP Landing Page**: https://aiseoengine.studio/mcp
 - **CLI Landing Page**: https://aiseoengine.studio/cli
 - **API Key Management**: https://aiseoengine.studio/app/profile
