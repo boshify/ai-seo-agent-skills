@@ -17,7 +17,7 @@ The MCP server supports two authentication methods:
 | Method | Used by | How it works |
 |--------|---------|-------------|
 | **OAuth 2.1** | Claude.ai, ChatGPT, web connectors | Automatic — paste the MCP URL, sign in when prompted |
-| **API Key** | CLI, Cursor, Claude Desktop, scripts | Set `Authorization: Bearer aise_your_key_here` header |
+| **API Key** | CLI, Cursor, Claude Desktop, scripts | Set `Authorization: Bearer aiseo_your_key_here` header |
 
 Both methods provide the same access to all 23 tools.
 
@@ -51,7 +51,7 @@ Add this to your `claude_desktop_config.json`:
     "ai-seo-engine": {
       "url": "https://aiseoengine.studio/api/mcp",
       "headers": {
-        "Authorization": "Bearer aise_your_key_here"
+        "Authorization": "Bearer aiseo_your_key_here"
       }
     }
   }
@@ -70,7 +70,7 @@ Restart Claude Desktop after saving.
 2. Click **Add MCP Server**
 3. Set type to **Remote (Streamable HTTP)**
 4. Enter URL: `https://aiseoengine.studio/api/mcp`
-5. Add header: `Authorization: Bearer aise_your_key_here`
+5. Add header: `Authorization: Bearer aiseo_your_key_here`
 6. Save and restart Cursor.
 
 ### Windsurf / Other MCP Clients
@@ -155,7 +155,7 @@ The AI will:
 
 ### "Authorization required" (401)
 - **OAuth users (Claude.ai/ChatGPT)**: Try disconnecting and reconnecting. The OAuth token may have expired — reconnecting triggers a fresh sign-in.
-- **API key users**: Verify your key starts with `aise_` and hasn't been revoked.
+- **API key users**: Verify your key starts with `aiseo_` and hasn't been revoked.
 
 ### "Rate limit exceeded" (429)
 API keys are rate-limited (60 req/min on Starter, 120 on Team). Wait and retry.
@@ -172,8 +172,8 @@ MCP tools call the API internally. Most respond in under 2 seconds. Job generati
 
 | Feature | MCP | CLI |
 |---------|-----|-----|
-| Installation | None | `npm install -g @aise/cli` |
-| Auth | OAuth (web) or API key (desktop) | `AISE_API_KEY` env var |
+| Installation | None | `npm install -g @aiseo/cli` |
+| Auth | OAuth (web) or API key (desktop) | `AISEO_API_KEY` env var |
 | Interface | Natural language via AI tools | Command line |
 | Best for | Chat-based workflows | Scripts and automation |
 | Tools/Commands | 23 tools | 12 command groups |

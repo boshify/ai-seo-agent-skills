@@ -18,14 +18,14 @@ skills:
     path: ai-seo-engine-skills/SKILL.md
     version: "1.1"
     description: >
-      Programmatic access to AI SEO Engine via MCP server or aise CLI. Manage SEO projects,
+      Programmatic access to AI SEO Engine via MCP server or aiseo CLI. Manage SEO projects,
       generate AI content, retrieve deliverables from Google Drive, and chain to CMS publishing.
       MCP server at https://aiseoengine.studio/api/mcp for use with Claude, Cursor, and other AI tools.
-    inputs: [aise-api-key, project-id]
+    inputs: [aiseo-api-key, project-id]
     outputs: [cli-output]
     chains_from: []
     chains_to: [cms-wordpress, cms-webflow, cms-shopify]
-    tools_used: [aise-cli, mcp-server, gws-cli, curl, jq]
+    tools_used: [aiseo-cli, mcp-server, gws-cli, curl, jq]
     tags: [seo, content-generation, ai, cli, mcp, google-drive]
 
   - name: cms-wordpress

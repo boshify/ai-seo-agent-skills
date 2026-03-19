@@ -178,7 +178,7 @@ gws sheets read SPREADSHEET_ID "Sheet1!A:C" --format=json
 If content comes from AI SEO Engine via Google Drive:
 ```bash
 # Get the Drive folder for the project
-aise drive folder --project-id PROJECT_ID
+aiseo drive folder --project-id PROJECT_ID
 
 # Export the Google Doc as HTML
 gws docs export DOC_ID --format=html --output=article.html
@@ -465,7 +465,7 @@ gws sheets read 1aBcDeFgHiJkLmNoPqRsT "Links!A:C" --format=json
 # => [{"anchor": "SEO audit", "url": "/seo-audit-guide/", "target_post": "all"}, ...]
 
 # 2. Download content from Drive
-aise drive folder --project-id proj_abc123
+aiseo drive folder --project-id proj_abc123
 gws docs export DOC_ID --format=html --output=article.html
 
 # 3. Inject internal links into article.html (find anchor phrases, wrap in <a> tags)

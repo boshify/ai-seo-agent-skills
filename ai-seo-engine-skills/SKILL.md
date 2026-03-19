@@ -2,19 +2,19 @@
 name: ai-seo-engine
 version: "1.0"
 description: >
-  Programmatic access to AI SEO Engine via the `aise` CLI. Use this skill to manage SEO projects,
+  Programmatic access to AI SEO Engine via the `aiseo` CLI. Use this skill to manage SEO projects,
   generate AI content, retrieve deliverables from Google Drive, and publish to CMS platforms.
-  Trigger when the task involves AI SEO Engine, the `aise` CLI, or SEO content automation.
+  Trigger when the task involves AI SEO Engine, the `aiseo` CLI, or SEO content automation.
 
 inputs:
   required:
     - type: text
-      label: "aise-api-key"
-      description: "API key starting with aise_ (get at https://aiseoengine.studio/app/profile)"
+      label: "aiseo-api-key"
+      description: "API key starting with aiseo_ (get at https://aiseoengine.studio/app/profile)"
   optional:
     - type: text
       label: "project-id"
-      description: "Target project ID (discover via `aise projects list`)"
+      description: "Target project ID (discover via `aiseo projects list`)"
     - type: text
       label: "google-workspace-cli"
       description: "Google Workspace CLI (`gws`) for Drive file access"
@@ -22,9 +22,9 @@ inputs:
 outputs:
   - type: json
     label: "cli-output"
-    description: "JSON responses from aise CLI commands"
+    description: "JSON responses from aiseo CLI commands"
 
-tools_used: [aise-cli, mcp-server, gws-cli, curl, jq]
+tools_used: [aiseo-cli, mcp-server, gws-cli, curl, jq]
 chains_from: []
 chains_to: [cms-wordpress, cms-webflow, cms-shopify]
 tags: [seo, content-generation, ai, cli, mcp, google-drive]
@@ -32,7 +32,7 @@ tags: [seo, content-generation, ai, cli, mcp, google-drive]
 
 # AI SEO Engine — Agent Skills
 
-AI SEO Engine is an AI-powered SEO content platform. This skills library teaches agents how to use it programmatically via the `aise` CLI.
+AI SEO Engine is an AI-powered SEO content platform. This skills library teaches agents how to use it programmatically via the `aiseo` CLI.
 
 ## Quick Start
 
@@ -41,38 +41,38 @@ AI SEO Engine is an AI-powered SEO content platform. This skills library teaches
 Connect directly from Claude, Cursor, or any MCP-compatible tool — no installation needed.
 
 - **MCP URL**: `https://aiseoengine.studio/api/mcp`
-- **Auth**: Bearer token with your `AISE_API_KEY`
+- **Auth**: Bearer token with your `AISEO_API_KEY`
 - **Setup guide**: [mcp-setup.md](./mcp-setup.md)
 
 ### Option B: CLI (for scripts and automation)
 
 ```bash
 # 1. Install
-npm install -g @aise/cli
+npm install -g @aiseo/cli
 
 # 2. Configure (get your key at https://aiseoengine.studio/app/profile)
-export AISE_API_KEY=aise_your_key_here
-export AISE_BASE_URL=https://aiseoengine.studio
+export AISEO_API_KEY=aiseo_your_key_here
+export AISEO_BASE_URL=https://aiseoengine.studio
 
 # 3. Verify
-aise auth status
+aiseo auth status
 ```
 
 ## Capabilities
 
 | Command Group | Description |
 |--------------|-------------|
-| `aise auth status` | Check authentication and account info |
-| `aise projects list\|create\|update\|delete` | Manage SEO projects |
-| `aise content list\|create\|update\|delete\|import` | Manage content items and bulk import |
-| `aise jobs start\|status\|wait\|cancel\|list` | Run AI content generation jobs |
-| `aise categories list\|create` | Organize content by category |
-| `aise config get\|set` | Configure project settings (language, style, etc.) |
-| `aise topical-map` | Generate a topical map for a project |
-| `aise content-types list` | List available content type templates |
-| `aise statuses` | List workflow statuses |
-| `aise usage` | View usage analytics |
-| `aise drive folder` | Get Google Drive folder ID for a project |
+| `aiseo auth status` | Check authentication and account info |
+| `aiseo projects list\|create\|update\|delete` | Manage SEO projects |
+| `aiseo content list\|create\|update\|delete\|import` | Manage content items and bulk import |
+| `aiseo jobs start\|status\|wait\|cancel\|list` | Run AI content generation jobs |
+| `aiseo categories list\|create` | Organize content by category |
+| `aiseo config get\|set` | Configure project settings (language, style, etc.) |
+| `aiseo topical-map` | Generate a topical map for a project |
+| `aiseo content-types list` | List available content type templates |
+| `aiseo statuses` | List workflow statuses |
+| `aiseo usage` | View usage analytics |
+| `aiseo drive folder` | Get Google Drive folder ID for a project |
 
 All commands output JSON by default. Add `--pretty` for formatted output.
 

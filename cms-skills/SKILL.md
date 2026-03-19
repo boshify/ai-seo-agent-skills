@@ -36,9 +36,9 @@ Routes content publishing tasks to the correct platform-specific CMS skill. Each
 
 ## Typical Workflow
 
-1. Generate content with AI SEO Engine (`aise jobs start`)
-2. Wait for completion (`aise jobs wait --id <jobId>`)
-3. Get project Drive folder (`aise drive folder --project <id>`)
+1. Generate content with AI SEO Engine (`aiseo jobs start`)
+2. Wait for completion (`aiseo jobs wait --id <jobId>`)
+3. Get project Drive folder (`aiseo drive folder --project <id>`)
 4. Download deliverables from Google Drive (`gws drive files export`)
 5. Publish to your CMS using the appropriate skill below
 

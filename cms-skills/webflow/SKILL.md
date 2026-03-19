@@ -325,10 +325,10 @@ Webflow v2 has no native asset upload API. Use one of these approaches:
 The end-to-end pipeline from AI SEO Engine to Webflow:
 
 ```
-aise drive folder -> gws export HTML -> fetch collection schema -> create item -> publish
+aiseo drive folder -> gws export HTML -> fetch collection schema -> create item -> publish
 ```
 
-1. `aise drive folder --project-id $PID` -- get the Google Drive folder ID for the project
+1. `aiseo drive folder --project-id $PID` -- get the Google Drive folder ID for the project
 2. `gws` -- export the generated content as HTML from Google Docs
 3. Fetch Webflow collection schema (Step 3 above)
 4. Create Webflow CMS item with the HTML and SEO metadata (Step 4 above)

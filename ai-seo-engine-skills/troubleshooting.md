@@ -13,17 +13,17 @@ Common errors and how to fix them.
 ```
 
 **Causes:**
-- `AISE_API_KEY` environment variable not set
+- `AISEO_API_KEY` environment variable not set
 - API key is invalid or typo in the key
 - Key has been revoked
 
 **Fix:**
 ```bash
 # Verify the variable is set
-echo $AISE_API_KEY
+echo $AISEO_API_KEY
 
 # Test authentication
-aise auth status
+aiseo auth status
 
 # If revoked, generate a new key at:
 # https://aiseoengine.studio/app/profile
@@ -40,8 +40,8 @@ aise auth status
 - Trying to access another tenant's resources
 
 **Fix:**
-- Verify the project belongs to your tenant: `aise projects list`
-- Check which tenant your key is scoped to: `aise auth status`
+- Verify the project belongs to your tenant: `aiseo projects list`
+- Check which tenant your key is scoped to: `aiseo auth status`
 
 ---
 
@@ -69,12 +69,12 @@ aise auth status
 ### Job stuck in "queued" status
 
 **Causes:**
-- Concurrent job limit reached (check with `aise jobs list --project <id> --status running`)
+- Concurrent job limit reached (check with `aiseo jobs list --project <id> --status running`)
 - Backlog jobs: only 1 runs at a time per project
 
 **Fix:**
-- Wait for running jobs to complete, or cancel them: `aise jobs cancel --id <jobId>`
-- Check job list: `aise jobs list --project <id> --pretty`
+- Wait for running jobs to complete, or cancel them: `aiseo jobs cancel --id <jobId>`
+- Check job list: `aiseo jobs list --project <id> --pretty`
 
 ### Job failed
 
@@ -94,9 +94,9 @@ aise auth status
 ```
 
 **Fix:**
-- Increase timeout: `aise jobs wait --id <id> --timeout 900`
+- Increase timeout: `aiseo jobs wait --id <id> --timeout 900`
 - Content generation can take 3-5 minutes; topical maps can take longer
-- Check job status manually: `aise jobs status --id <id>`
+- Check job status manually: `aiseo jobs status --id <id>`
 
 ---
 
@@ -125,13 +125,13 @@ The project doesn't have a Drive folder linked.
 ### "Project not found"
 
 **Fix:**
-- Verify the project ID: `aise projects list`
-- Check you're using the correct `AISE_BASE_URL`
+- Verify the project ID: `aiseo projects list`
+- Check you're using the correct `AISEO_BASE_URL`
 
 ### "Content item not found"
 
 **Fix:**
-- Verify the content item ID: `aise content list --project <id>`
+- Verify the content item ID: `aiseo content list --project <id>`
 - Content items are scoped to projects — make sure you're looking in the right project
 
 ### Duplicate content items
@@ -140,22 +140,22 @@ The API doesn't prevent duplicate keywords. Before creating, check:
 
 ```bash
 # Search for existing items with the same keyword
-aise content list --project proj_abc | jq '.[] | select(.keyword == "your keyword")'
+aiseo content list --project proj_abc | jq '.[] | select(.keyword == "your keyword")'
 ```
 
 ---
 
 ## CLI Installation Issues
 
-### "aise: command not found"
+### "aiseo: command not found"
 
 **Fix:**
 ```bash
 # Verify installation
-npm list -g @aise/cli
+npm list -g @aiseo/cli
 
 # Reinstall
-npm install -g @aise/cli
+npm install -g @aiseo/cli
 
 # Check npm global bin is in PATH
 npm config get prefix

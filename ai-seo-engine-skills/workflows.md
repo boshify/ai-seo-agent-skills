@@ -10,30 +10,30 @@ Create a project, generate content, and deliver it.
 
 ```bash
 # Create a project
-PROJECT_ID=$(aise projects create --name "Tech Blog" --url "https://techblog.com" | jq -r '.id')
+PROJECT_ID=$(aiseo projects create --name "Tech Blog" --url "https://techblog.com" | jq -r '.id')
 
 # Generate topical map
-TMAP_JOB=$(aise topical-map --project $PROJECT_ID | jq -r '.jobId')
-aise jobs wait --id $TMAP_JOB
+TMAP_JOB=$(aiseo topical-map --project $PROJECT_ID | jq -r '.jobId')
+aiseo jobs wait --id $TMAP_JOB
 
 # Create content items from your keyword list
-aise content create --project $PROJECT_ID --keyword "best seo tools 2026" --category "Reviews"
-aise content create --project $PROJECT_ID --keyword "how to do keyword research" --category "Guides"
-aise content create --project $PROJECT_ID --keyword "on-page seo checklist" --category "Resources"
+aiseo content create --project $PROJECT_ID --keyword "best seo tools 2026" --category "Reviews"
+aiseo content create --project $PROJECT_ID --keyword "how to do keyword research" --category "Guides"
+aiseo content create --project $PROJECT_ID --keyword "on-page seo checklist" --category "Resources"
 
 # List content to get IDs
-ITEMS=$(aise content list --project $PROJECT_ID)
+ITEMS=$(aiseo content list --project $PROJECT_ID)
 echo $ITEMS | jq '.[].id'
 
 # Start generation jobs
 ITEM_ID=$(echo $ITEMS | jq -r '.[0].id')
-JOB_ID=$(aise jobs start --project $PROJECT_ID --content $ITEM_ID | jq -r '.jobId')
+JOB_ID=$(aiseo jobs start --project $PROJECT_ID --content $ITEM_ID | jq -r '.jobId')
 
 # Wait for completion
-aise jobs wait --id $JOB_ID --timeout 600
+aiseo jobs wait --id $JOB_ID --timeout 600
 
 # Get deliverables from Drive
-FOLDER_ID=$(aise drive folder --project $PROJECT_ID | jq -r '.folderId')
+FOLDER_ID=$(aiseo drive folder --project $PROJECT_ID | jq -r '.folderId')
 gws drive files list --params "{\"q\": \"'${FOLDER_ID}' in parents\"}"
 ```
 
@@ -51,20 +51,20 @@ Import keywords from CSV and batch-generate content.
 # technical seo audit,Guides,Checklist
 
 # Import all keywords
-aise content import --project proj_abc --file keywords.csv
+aiseo content import --project proj_abc --file keywords.csv
 
 # List imported items
-ITEMS=$(aise content list --project proj_abc --status "backlog")
+ITEMS=$(aiseo content list --project proj_abc --status "backlog")
 
 # Start jobs for each item
 for ITEM_ID in $(echo $ITEMS | jq -r '.[].id'); do
-  JOB=$(aise jobs start --project proj_abc --content $ITEM_ID)
+  JOB=$(aiseo jobs start --project proj_abc --content $ITEM_ID)
   echo "Started job for $ITEM_ID: $(echo $JOB | jq -r '.jobId')"
   sleep 2  # respect rate limits
 done
 
 # Monitor all running jobs
-aise jobs list --project proj_abc --status running --pretty
+aiseo jobs list --project proj_abc --status running --pretty
 ```
 
 ---
@@ -75,18 +75,18 @@ Find and refresh stale content.
 
 ```bash
 # List all live content
-LIVE=$(aise content list --project proj_abc --status "Live")
+LIVE=$(aiseo content list --project proj_abc --status "Live")
 
 # Identify items to refresh (e.g., older than 6 months — filter by date in your agent logic)
 echo $LIVE | jq '.[] | select(.updatedAt < "2025-09-01") | {id, keyword, updatedAt}'
 
 # Move items to Refresh status
 ITEM_ID="ci_stale_123"
-aise content update --id $ITEM_ID --status "Refresh"
+aiseo content update --id $ITEM_ID --status "Refresh"
 
 # Start refresh job
-JOB_ID=$(aise jobs start --project proj_abc --content $ITEM_ID | jq -r '.jobId')
-aise jobs wait --id $JOB_ID
+JOB_ID=$(aiseo jobs start --project proj_abc --content $ITEM_ID | jq -r '.jobId')
+aiseo jobs wait --id $JOB_ID
 ```
 
 ---
@@ -97,7 +97,7 @@ Download content from Google Drive and publish to a CMS.
 
 ```bash
 # Get folder ID
-FOLDER_ID=$(aise drive folder --project proj_abc | jq -r '.folderId')
+FOLDER_ID=$(aiseo drive folder --project proj_abc | jq -r '.folderId')
 
 # List Google Docs (articles)
 gws drive files list --params "{
@@ -141,7 +141,7 @@ See full CMS guides:
 Download images from Drive and upload to your CMS media library.
 
 ```bash
-FOLDER_ID=$(aise drive folder --project proj_abc | jq -r '.folderId')
+FOLDER_ID=$(aiseo drive folder --project proj_abc | jq -r '.folderId')
 
 # List all images
 IMAGES=$(gws drive files list --params "{
@@ -178,7 +178,7 @@ done
 Read linking recommendations from a spreadsheet and apply them to content.
 
 ```bash
-FOLDER_ID=$(aise drive folder --project proj_abc | jq -r '.folderId')
+FOLDER_ID=$(aiseo drive folder --project proj_abc | jq -r '.folderId')
 
 # Find spreadsheets
 gws drive files list --params "{
@@ -210,8 +210,8 @@ gws drive files export --params '{"fileId": "sheet_id"}' --download text/csv > l
 Best for single jobs where you need the result before proceeding.
 
 ```bash
-JOB_ID=$(aise jobs start --project proj_abc --content ci_123 | jq -r '.jobId')
-aise jobs wait --id $JOB_ID --timeout 600 --interval 10
+JOB_ID=$(aiseo jobs start --project proj_abc --content ci_123 | jq -r '.jobId')
+aiseo jobs wait --id $JOB_ID --timeout 600 --interval 10
 # Blocks until done. Exit code 0 = success, 1 = failure/timeout.
 ```
 
@@ -221,7 +221,7 @@ Best for batch operations where you don't want to block.
 
 ```bash
 # Start job with callback
-aise jobs start \
+aiseo jobs start \
   --project proj_abc \
   --content ci_123 \
   --callback-url "https://your-server.com/webhook" \
@@ -246,7 +246,7 @@ With `X-Signature-256: sha256=<hmac>` header for verification.
 For custom polling logic.
 
 ```bash
-aise jobs status --id job_xyz
+aiseo jobs status --id job_xyz
 # { "id": "job_xyz", "status": "running", "displayText": "Writing section 3/5..." }
 ```
 

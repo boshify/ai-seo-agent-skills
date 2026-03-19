@@ -14,12 +14,12 @@ Complete command reference for the AI SEO Engine CLI. All commands output JSON b
 
 ## auth
 
-### `aise auth status`
+### `aiseo auth status`
 
 Check current authentication and account info.
 
 ```bash
-aise auth status --pretty
+aiseo auth status --pretty
 ```
 
 ```json
@@ -35,15 +35,15 @@ aise auth status --pretty
 
 ## projects
 
-### `aise projects list`
+### `aiseo projects list`
 
 List all projects you have access to.
 
 ```bash
-aise projects list --pretty
+aiseo projects list --pretty
 ```
 
-### `aise projects create`
+### `aiseo projects create`
 
 | Flag | Required | Description |
 |------|----------|-------------|
@@ -52,10 +52,10 @@ aise projects list --pretty
 | `--tenant-id <id>` | No | Tenant ID (uses default if omitted) |
 
 ```bash
-aise projects create --name "Tech Blog" --url "https://techblog.com"
+aiseo projects create --name "Tech Blog" --url "https://techblog.com"
 ```
 
-### `aise projects update`
+### `aiseo projects update`
 
 | Flag | Required | Description |
 |------|----------|-------------|
@@ -64,24 +64,24 @@ aise projects create --name "Tech Blog" --url "https://techblog.com"
 | `--url <url>` | No | New root URL |
 
 ```bash
-aise projects update --id proj_abc --name "Tech Blog v2"
+aiseo projects update --id proj_abc --name "Tech Blog v2"
 ```
 
-### `aise projects delete`
+### `aiseo projects delete`
 
 | Flag | Required | Description |
 |------|----------|-------------|
 | `--id <id>` | Yes | Project ID |
 
 ```bash
-aise projects delete --id proj_abc
+aiseo projects delete --id proj_abc
 ```
 
 ---
 
 ## content
 
-### `aise content list`
+### `aiseo content list`
 
 | Flag | Required | Description |
 |------|----------|-------------|
@@ -92,10 +92,10 @@ aise projects delete --id proj_abc
 | `--limit <n>` | No | Items per page (default: 50) |
 
 ```bash
-aise content list --project proj_abc --status "Backlog" --pretty
+aiseo content list --project proj_abc --status "Backlog" --pretty
 ```
 
-### `aise content create`
+### `aiseo content create`
 
 | Flag | Required | Description |
 |------|----------|-------------|
@@ -108,10 +108,10 @@ aise content list --project proj_abc --status "Backlog" --pretty
 | `--notes <notes>` | No | Notes |
 
 ```bash
-aise content create --project proj_abc --keyword "best seo tools 2026" --category "Reviews"
+aiseo content create --project proj_abc --keyword "best seo tools 2026" --category "Reviews"
 ```
 
-### `aise content update`
+### `aiseo content update`
 
 | Flag | Required | Description |
 |------|----------|-------------|
@@ -123,20 +123,20 @@ aise content create --project proj_abc --keyword "best seo tools 2026" --categor
 | `--notes <notes>` | No | New notes |
 
 ```bash
-aise content update --id ci_123 --status "Production"
+aiseo content update --id ci_123 --status "Production"
 ```
 
-### `aise content delete`
+### `aiseo content delete`
 
 | Flag | Required | Description |
 |------|----------|-------------|
 | `--id <id>` | Yes | Content item ID |
 
 ```bash
-aise content delete --id ci_123
+aiseo content delete --id ci_123
 ```
 
-### `aise content import`
+### `aiseo content import`
 
 Bulk import content from a CSV file. CSV must have headers matching content fields (e.g., `keyword,category,contentType,workflowStatus`).
 
@@ -146,7 +146,7 @@ Bulk import content from a CSV file. CSV must have headers matching content fiel
 | `--file <path>` | Yes | Path to CSV file |
 
 ```bash
-aise content import --project proj_abc --file keywords.csv
+aiseo content import --project proj_abc --file keywords.csv
 ```
 
 Example CSV:
@@ -161,7 +161,7 @@ seo checklist 2026,Resources,Checklist
 
 ## jobs
 
-### `aise jobs start`
+### `aiseo jobs start`
 
 Start an AI content generation job.
 
@@ -174,14 +174,14 @@ Start an AI content generation job.
 | `--callback-secret <secret>` | No | HMAC secret for webhook signature |
 
 ```bash
-aise jobs start --project proj_abc --content ci_123
+aiseo jobs start --project proj_abc --content ci_123
 ```
 
 ```json
 { "jobId": "job_xyz", "status": "queued" }
 ```
 
-### `aise jobs status`
+### `aiseo jobs status`
 
 Get current status of a job.
 
@@ -190,7 +190,7 @@ Get current status of a job.
 | `--id <id>` | Yes | Job ID |
 
 ```bash
-aise jobs status --id job_xyz --pretty
+aiseo jobs status --id job_xyz --pretty
 ```
 
 ```json
@@ -203,7 +203,7 @@ aise jobs status --id job_xyz --pretty
 }
 ```
 
-### `aise jobs wait`
+### `aiseo jobs wait`
 
 Block until a job completes or fails. Progress is printed to stderr, final result to stdout.
 
@@ -214,12 +214,12 @@ Block until a job completes or fails. Progress is printed to stderr, final resul
 | `--interval <seconds>` | No | Poll interval (default: 5) |
 
 ```bash
-aise jobs wait --id job_xyz --timeout 600
+aiseo jobs wait --id job_xyz --timeout 600
 ```
 
 Exit code 0 if completed, 1 if failed or timed out.
 
-### `aise jobs cancel`
+### `aiseo jobs cancel`
 
 Cancel a running or queued job.
 
@@ -228,10 +228,10 @@ Cancel a running or queued job.
 | `--id <id>` | Yes | Job ID |
 
 ```bash
-aise jobs cancel --id job_xyz
+aiseo jobs cancel --id job_xyz
 ```
 
-### `aise jobs list`
+### `aiseo jobs list`
 
 List jobs for a project.
 
@@ -241,7 +241,7 @@ List jobs for a project.
 | `--status <status>` | No | Filter by status (queued/running/completed/failed) |
 
 ```bash
-aise jobs list --project proj_abc --status running --pretty
+aiseo jobs list --project proj_abc --status running --pretty
 ```
 
 ```json
@@ -264,17 +264,17 @@ aise jobs list --project proj_abc --status running --pretty
 
 ## categories
 
-### `aise categories list`
+### `aiseo categories list`
 
 | Flag | Required | Description |
 |------|----------|-------------|
 | `--project <id>` | Yes | Project ID |
 
 ```bash
-aise categories list --project proj_abc --pretty
+aiseo categories list --project proj_abc --pretty
 ```
 
-### `aise categories create`
+### `aiseo categories create`
 
 | Flag | Required | Description |
 |------|----------|-------------|
@@ -283,14 +283,14 @@ aise categories list --project proj_abc --pretty
 | `--slug <slug>` | No | Category slug |
 
 ```bash
-aise categories create --project proj_abc --name "Technical SEO" --slug "technical-seo"
+aiseo categories create --project proj_abc --name "Technical SEO" --slug "technical-seo"
 ```
 
 ---
 
 ## config
 
-### `aise config get`
+### `aiseo config get`
 
 Get project configuration (language, writing style, etc.).
 
@@ -299,10 +299,10 @@ Get project configuration (language, writing style, etc.).
 | `--project <id>` | Yes | Project ID |
 
 ```bash
-aise config get --project proj_abc --pretty
+aiseo config get --project proj_abc --pretty
 ```
 
-### `aise config set`
+### `aiseo config set`
 
 Update project configuration.
 
@@ -314,14 +314,14 @@ Update project configuration.
 | `--writing-style <style>` | No | Writing style description |
 
 ```bash
-aise config set --project proj_abc --language "English" --country "US" --writing-style "Professional, authoritative"
+aiseo config set --project proj_abc --language "English" --country "US" --writing-style "Professional, authoritative"
 ```
 
 ---
 
 ## topical-map
 
-### `aise topical-map`
+### `aiseo topical-map`
 
 Generate a topical map (keyword cluster analysis) for a project.
 
@@ -330,16 +330,16 @@ Generate a topical map (keyword cluster analysis) for a project.
 | `--project <id>` | Yes | Project ID |
 
 ```bash
-aise topical-map --project proj_abc --pretty
+aiseo topical-map --project proj_abc --pretty
 ```
 
-Returns a job that generates the topical map. Use `aise jobs wait` to block until complete.
+Returns a job that generates the topical map. Use `aiseo jobs wait` to block until complete.
 
 ---
 
 ## content-types
 
-### `aise content-types list`
+### `aiseo content-types list`
 
 List available content type templates.
 
@@ -348,19 +348,19 @@ List available content type templates.
 | `--project <id>` | Yes | Project ID |
 
 ```bash
-aise content-types list --project proj_abc --pretty
+aiseo content-types list --project proj_abc --pretty
 ```
 
 ---
 
 ## statuses
 
-### `aise statuses`
+### `aiseo statuses`
 
 List all available workflow statuses.
 
 ```bash
-aise statuses --pretty
+aiseo statuses --pretty
 ```
 
 ```json
@@ -375,19 +375,19 @@ aise statuses --pretty
 
 ## usage
 
-### `aise usage`
+### `aiseo usage`
 
 Show usage analytics for your tenant.
 
 ```bash
-aise usage --pretty
+aiseo usage --pretty
 ```
 
 ---
 
 ## drive
 
-### `aise drive folder`
+### `aiseo drive folder`
 
 Get the Google Drive folder ID for a project. Use with the [Google Workspace CLI](./google-workspace.md) for file operations.
 
@@ -396,7 +396,7 @@ Get the Google Drive folder ID for a project. Use with the [Google Workspace CLI
 | `--project <id>` | Yes | Project ID |
 
 ```bash
-aise drive folder --project proj_abc --pretty
+aiseo drive folder --project proj_abc --pretty
 ```
 
 ```json

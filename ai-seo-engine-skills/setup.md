@@ -9,13 +9,13 @@
 ## Installation
 
 ```bash
-npm install -g @aise/cli
+npm install -g @aiseo/cli
 ```
 
 Verify the installation:
 
 ```bash
-aise --version
+aiseo --version
 # 0.1.0
 ```
 
@@ -26,7 +26,7 @@ aise --version
 3. Click **Generate New Key**
 4. Give it a name (e.g., "Claude Code agent")
 5. Copy the key immediately — it's shown only once
-6. The key starts with `aise_`
+6. The key starts with `aiseo_`
 
 ## Environment Variables
 
@@ -34,16 +34,16 @@ Set these in your shell profile or agent configuration:
 
 ```bash
 # Required — your API key
-export AISE_API_KEY=aise_your_key_here
+export AISEO_API_KEY=aiseo_your_key_here
 
 # Optional — defaults to https://aiseoengine.studio
-export AISE_BASE_URL=https://aiseoengine.studio
+export AISEO_BASE_URL=https://aiseoengine.studio
 ```
 
 ## Verify Authentication
 
 ```bash
-aise auth status --pretty
+aiseo auth status --pretty
 ```
 
 Expected output:

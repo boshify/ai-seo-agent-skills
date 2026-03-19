@@ -17,12 +17,12 @@ gws drive about get --params '{"fields": "user"}'
 
 ## Workflow
 
-1. Get the project's Drive folder ID with `aise`
+1. Get the project's Drive folder ID with `aiseo`
 2. Use `gws` for all file operations
 
 ```bash
 # Step 1: Get folder ID
-FOLDER_ID=$(aise drive folder --project proj_abc | jq -r '.folderId')
+FOLDER_ID=$(aiseo drive folder --project proj_abc | jq -r '.folderId')
 
 # Step 2: List files in the folder
 gws drive files list --params "{
@@ -36,7 +36,7 @@ gws drive files list --params "{
 ### List all files in a project folder
 
 ```bash
-FOLDER_ID=$(aise drive folder --project proj_abc | jq -r '.folderId')
+FOLDER_ID=$(aiseo drive folder --project proj_abc | jq -r '.folderId')
 
 gws drive files list --params "{
   \"q\": \"'${FOLDER_ID}' in parents and trashed = false\",
@@ -98,7 +98,7 @@ gws drive files export \
 ### Upload a file to the project folder
 
 ```bash
-FOLDER_ID=$(aise drive folder --project proj_abc | jq -r '.folderId')
+FOLDER_ID=$(aiseo drive folder --project proj_abc | jq -r '.folderId')
 
 gws drive +upload \
   --file ./image.jpg \
@@ -136,17 +136,17 @@ gws drive files list --params "{
 
 ```bash
 # 1. Create content and generate
-aise content create --project proj_abc --keyword "best seo tools 2026"
+aiseo content create --project proj_abc --keyword "best seo tools 2026"
 # Returns: { "id": "ci_123", ... }
 
-aise jobs start --project proj_abc --content ci_123
+aiseo jobs start --project proj_abc --content ci_123
 # Returns: { "jobId": "job_xyz", "status": "queued" }
 
-aise jobs wait --id job_xyz
+aiseo jobs wait --id job_xyz
 # Blocks until complete
 
 # 2. Get files from Drive
-FOLDER_ID=$(aise drive folder --project proj_abc | jq -r '.folderId')
+FOLDER_ID=$(aiseo drive folder --project proj_abc | jq -r '.folderId')
 
 # Find the generated article
 gws drive files list --params "{

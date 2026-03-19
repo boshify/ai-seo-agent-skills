@@ -38,7 +38,7 @@ When you create a project, the system automatically:
 
 A project's `rootUrl` (e.g., `https://techblog.com`) is used to auto-generate full URLs for every content item. If you set a root URL, each content item gets a `fullUrl` like `https://techblog.com/seo-tips/keyword-research-guide`.
 
-**CLI:** `aise projects create --name "Tech Blog" --url "https://techblog.com"`
+**CLI:** `aiseo projects create --name "Tech Blog" --url "https://techblog.com"`
 
 ---
 
@@ -89,7 +89,7 @@ The system is **multilingual out of the box** — changing language and country 
 
 **Why it matters:** Configuration is the difference between generic AI content and content that sounds like your brand. An agent should set these before generating anything.
 
-**CLI:** `aise config set --project <id> --language "English" --country "US" --writing-style "Professional"`
+**CLI:** `aiseo config set --project <id> --language "English" --country "US" --writing-style "Professional"`
 
 ---
 
@@ -112,7 +112,7 @@ Think of it as the AI answering: *"If I were building this site from scratch to 
 
 **The topical map view** in the web UI provides a visual representation of all your content organized by category. Topics within each category are sorted from highest to lowest search volume. Color-coded dots indicate the workflow status of each topic, and green/red bars show search volume vs keyword difficulty.
 
-**CLI:** `aise topical-map --project <id>` → returns a jobId (this is a long-running job — use `aise jobs wait`)
+**CLI:** `aiseo topical-map --project <id>` → returns a jobId (this is a long-running job — use `aiseo jobs wait`)
 
 ---
 
@@ -132,7 +132,7 @@ Categories can be:
 
 Deleting a category gives you the option to leave content items uncategorized or migrate them to a different category.
 
-**CLI:** `aise categories create --project <id> --name "Technical SEO"`
+**CLI:** `aiseo categories create --project <id> --name "Technical SEO"`
 
 ---
 
@@ -164,7 +164,7 @@ A **content item** is a single piece of content you want to create — one keywo
 
 **Exporting content:** Export all content or just the current filtered view as CSV, Excel, or XML.
 
-**CLI:** `aise content create --project <id> --keyword "best seo tools 2026" --category "Reviews"`
+**CLI:** `aiseo content create --project <id> --keyword "best seo tools 2026" --category "Reviews"`
 
 ---
 
@@ -188,7 +188,7 @@ Examples of built-in content types:
 
 **Why it matters:** Content types ensure consistency across your content. Every "Tutorial" follows the same structure, every "Product Review" has the same sections. This is especially important for agents running bulk generation — the output is predictable.
 
-**CLI:** `aise content-types list --project <id>` → see available templates
+**CLI:** `aiseo content-types list --project <id>` → see available templates
 
 ---
 
@@ -242,7 +242,7 @@ Because it can crawl live pages, you can import existing URLs, set them to "Refr
 - **Full rewrite of existing content?** Set status to `"Live"` and generate (sends it back through Production)
 - **Moving backward:** You can move a content item back to any stage and regenerate (e.g., move back to "Add Images" to regenerate images)
 
-**CLI:** `aise statuses` → see all available statuses
+**CLI:** `aiseo statuses` → see all available statuses
 
 ---
 
@@ -286,7 +286,7 @@ Jobs run on two parallel tracks to balance throughput:
 Jobs support optional webhook callbacks for async workflows:
 
 ```bash
-aise jobs start --project <id> --content <id> \
+aiseo jobs start --project <id> --content <id> \
   --callback-url "https://your-server.com/webhook" \
   --callback-secret "your_hmac_secret"
 ```
@@ -295,11 +295,11 @@ When the job completes, a POST is sent to your URL with the job result and an HM
 
 **CLI:**
 ```bash
-aise jobs start --project <id> --content <id>    # Start generation
-aise jobs status --id <jobId>                     # Check progress
-aise jobs wait --id <jobId> --timeout 600         # Block until done
-aise jobs list --project <id> --status running    # List active jobs
-aise jobs cancel --id <jobId>                     # Cancel a job
+aiseo jobs start --project <id> --content <id>    # Start generation
+aiseo jobs status --id <jobId>                     # Check progress
+aiseo jobs wait --id <jobId> --timeout 600         # Block until done
+aiseo jobs list --project <id> --status running    # List active jobs
+aiseo jobs cancel --id <jobId>                     # Cancel a job
 ```
 
 ---
@@ -341,7 +341,7 @@ Project Drive Folder/
 
 ### How to Access
 
-1. Get the project's Drive folder ID: `aise drive folder --project <id>`
+1. Get the project's Drive folder ID: `aiseo drive folder --project <id>`
 2. Use the [Google Workspace CLI (`gws`)](https://github.com/googleworkspace/cli) for all file operations:
    ```bash
    # List files in the project folder
@@ -398,27 +398,27 @@ The override prompt is automatically injected into the AI's context for every jo
 Here's how everything fits together for an agent running the complete workflow:
 
 ```
-1. Create project          → aise projects create --name "Tech Blog" --url "https://..."
+1. Create project          → aiseo projects create --name "Tech Blog" --url "https://..."
                              (Drive folder auto-created, onboarding agent fills config)
 
-2. Configure (optional)    → aise config set --project <id> --language "English" --writing-style "..."
+2. Configure (optional)    → aiseo config set --project <id> --language "English" --writing-style "..."
                              (Customize language, style, image guide, topical map settings)
 
-3. Generate topical map    → aise topical-map --project <id>
-                           → aise jobs wait --id <jobId>
+3. Generate topical map    → aiseo topical-map --project <id>
+                           → aiseo jobs wait --id <jobId>
                              (Categories auto-created, content items created in Backlog)
 
-4. Create content items    → aise content create --project <id> --keyword "..." --category "..."
-   OR bulk import          → aise content import --project <id> --file keywords.csv
+4. Create content items    → aiseo content create --project <id> --keyword "..." --category "..."
+   OR bulk import          → aiseo content import --project <id> --file keywords.csv
                              (Use status "Production" for decided keywords,
                               "Backlog" only if you want AI to research/refine them)
 
-5. Start generation jobs   → aise jobs start --project <id> --content <id>
-                           → aise jobs wait --id <jobId>
+5. Start generation jobs   → aiseo jobs start --project <id> --content <id>
+                           → aiseo jobs wait --id <jobId>
                              (If automation is on, it flows through all stages automatically.
                               If off, you start a job at each stage manually.)
 
-6. Get deliverables        → aise drive folder --project <id>
+6. Get deliverables        → aiseo drive folder --project <id>
                            → gws drive files export ... > article.html
                            → gws drive files get ... > featured.jpg
                            → gws sheets +read ... (internal linking data)
