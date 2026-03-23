@@ -66,3 +66,17 @@ skills:
     chains_to: []
     tools_used: [curl, jq]
     tags: [cms, shopify, publishing, seo, ecommerce]
+
+  - name: page-scraper
+    path: page-scraper/SKILL.md
+    version: "1.0"
+    description: >
+      Extract text, metadata, tables, and schema markup from web pages using the hosted page
+      scraper API at read.aiseoengine.studio. Handles bot protection bypass, automatic Jina Reader
+      fallback, sitemap parsing, and SEO element extraction.
+    inputs: [url]
+    outputs: [page-content, seo-metadata, sitemap-urls]
+    chains_from: [ai-seo-engine]
+    chains_to: [ai-seo-engine, cms-wordpress, cms-webflow, cms-shopify]
+    tools_used: [curl, jina-reader]
+    tags: [scraping, content-extraction, seo, research, sitemap]
