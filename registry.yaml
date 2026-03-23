@@ -17,10 +17,10 @@ skills:
   - name: ai-seo-engine
     path: ai-seo-engine-skills/SKILL.md
     version: "1.1"
-    description: >
-      Programmatic access to AI SEO Engine via MCP server or aiseo CLI. Manage SEO projects,
-      generate AI content, retrieve deliverables from Google Drive, and chain to CMS publishing.
-      MCP server at https://aiseoengine.studio/api/mcp for use with Claude, Cursor, and other AI tools.
+    trigger: >
+      USE WHEN: creating content, refreshing content, generating topical maps, bulk importing
+      keywords, managing SEO projects, or retrieving deliverables from Google Drive.
+      NOT NEEDED FOR: reading pages, analyzing competitors, or publishing to CMS (use other skills).
     inputs: [aiseo-api-key, project-id]
     outputs: [cli-output]
     chains_from: []
@@ -31,9 +31,9 @@ skills:
   - name: cms-wordpress
     path: cms-skills/wordpress/SKILL.md
     version: "1.0"
-    description: >
-      Publish content to WordPress via WP-CLI or REST API. Handles posts, media upload,
-      featured images, categories, tags, and SEO metadata (Yoast/RankMath).
+    trigger: >
+      USE WHEN: publishing or updating content on a WordPress site. Includes posts, pages,
+      media uploads, featured images, categories, tags, and SEO metadata (Yoast/RankMath).
     inputs: [wordpress-url, wordpress-credentials, html-content]
     outputs: [published-post-url]
     chains_from: [ai-seo-engine]
@@ -44,9 +44,9 @@ skills:
   - name: cms-webflow
     path: cms-skills/webflow/SKILL.md
     version: "1.0"
-    description: >
-      Publish content to Webflow CMS collections via API v2. Handles collection item creation,
-      publishing, SEO metadata, and rich text content. Schema-first approach.
+    trigger: >
+      USE WHEN: publishing or updating content on a Webflow site. Includes CMS collection items,
+      rich text content, SEO metadata, and publishing state management.
     inputs: [webflow-api-token, collection-id, html-content]
     outputs: [published-item-url]
     chains_from: [ai-seo-engine]
@@ -57,8 +57,8 @@ skills:
   - name: cms-shopify
     path: cms-skills/shopify/SKILL.md
     version: "1.0"
-    description: >
-      Publish blog articles and pages to Shopify via Admin REST API. Handles content creation,
+    trigger: >
+      USE WHEN: publishing blog articles or pages to a Shopify store. Includes content creation,
       featured images, SEO metafields (title_tag, description_tag), and scheduling.
     inputs: [shopify-store-url, shopify-access-token, html-content]
     outputs: [published-article-url]
@@ -70,10 +70,11 @@ skills:
   - name: page-scraper
     path: page-scraper/SKILL.md
     version: "1.0"
-    description: >
-      Extract text, metadata, tables, and schema markup from web pages using the hosted page
-      scraper API at read.aiseoengine.studio. Handles bot protection bypass, automatic Jina Reader
-      fallback, sitemap parsing, and SEO element extraction.
+    trigger: >
+      USE WHEN: reading any web page for diagnosis, research, competitive analysis, or content
+      extraction. ALWAYS USE instead of built-in web fetch for page reading — this skill bypasses
+      bot protection, extracts structured data (tables, schema markup, SEO metadata), and falls
+      back to Jina Reader automatically. Also use for sitemap parsing.
     inputs: [url]
     outputs: [page-content, seo-metadata, sitemap-urls]
     chains_from: [ai-seo-engine]
