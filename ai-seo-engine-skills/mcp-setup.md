@@ -19,7 +19,7 @@ The MCP server supports two authentication methods:
 | **OAuth 2.1** | Claude.ai, ChatGPT, web connectors | Automatic — paste the MCP URL, sign in when prompted |
 | **API Key** | CLI, Cursor, Claude Desktop, scripts | Set `Authorization: Bearer aiseo_your_key_here` header |
 
-Both methods provide the same access to all 23 tools.
+Both methods provide the same access to all 27 tools.
 
 ## Setup by Client
 
@@ -30,7 +30,7 @@ Both methods provide the same access to all 23 tools.
 3. Enter the MCP server URL: `https://aiseoengine.studio/api/mcp`
 4. Click **Connect** — you'll be redirected to sign in with your AI SEO Engine account
 5. Approve access on the consent screen
-6. Done. The 23 AI SEO Engine tools will appear in your conversation.
+6. Done. The 27 AI SEO Engine tools will appear in your conversation.
 
 No API key is needed — OAuth handles authentication automatically.
 
@@ -82,7 +82,7 @@ Any client supporting remote MCP servers via Streamable HTTP can connect:
 
 ## Available Tools
 
-The MCP server exposes 23 tools — everything the CLI can do:
+The MCP server exposes 27 tools — everything the CLI can do:
 
 ### Project Management
 
@@ -102,6 +102,7 @@ The MCP server exposes 23 tools — everything the CLI can do:
 | `content_create` | Create a new content item |
 | `content_update` | Update a content item |
 | `content_delete` | Delete content items |
+| `content_bulk_delete` | Delete multiple content items at once |
 | `content_bulk_import` | Bulk import content items from a list |
 
 ### Job Management
@@ -110,6 +111,7 @@ The MCP server exposes 23 tools — everything the CLI can do:
 |------|-------------|
 | `jobs_start` | Start a content generation job |
 | `jobs_status` | Get the status of a job |
+| `jobs_wait` | Wait for a job to complete (polls until done or timeout) |
 | `jobs_cancel` | Cancel a running job |
 | `jobs_list` | List jobs for a project |
 
@@ -126,6 +128,7 @@ The MCP server exposes 23 tools — everything the CLI can do:
 | `statuses_list` | List all workflow statuses |
 | `usage_analytics` | View usage analytics and quotas |
 | `drive_folder` | Get Google Drive folder ID for a project |
+| `content_export_doc` | Export a Google Doc as clean markdown for CMS publishing |
 
 ## Example Conversations
 
@@ -150,6 +153,14 @@ The AI will:
 1. Call `content_bulk_import` with all keywords
 2. Call `jobs_start` for each content item
 3. Monitor with `jobs_list`
+
+### Export content to CMS
+> "Export the article for 'best widgets 2024' as markdown"
+
+The AI will:
+1. Call `drive_folder` to find the project's Google Drive folder
+2. Find the doc ID for the content item
+3. Call `content_export_doc` with the doc ID and user key to get clean markdown
 
 ## Troubleshooting
 
@@ -176,7 +187,7 @@ MCP tools call the API internally. Most respond in under 2 seconds. Job generati
 | Auth | OAuth (web) or API key (desktop) | `AISEO_API_KEY` env var |
 | Interface | Natural language via AI tools | Command line |
 | Best for | Chat-based workflows | Scripts and automation |
-| Tools/Commands | 23 tools | 12 command groups |
+| Tools/Commands | 27 tools | 12 command groups |
 
 Both use the same API endpoints and API key. You can use both interchangeably.
 

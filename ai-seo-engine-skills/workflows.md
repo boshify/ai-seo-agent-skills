@@ -1,6 +1,8 @@
 # Workflow Recipes
 
-Step-by-step workflows for common agent tasks. Each workflow is a sequence of CLI commands you can run directly.
+Step-by-step workflows for common agent tasks. Each workflow is a sequence of CLI commands (or MCP tool calls) you can run directly.
+
+> **MCP vs CLI**: Most workflows below show CLI commands. MCP users can substitute the equivalent MCP tool calls (e.g., `jobs_start` instead of `aiseo jobs start`). Where the MCP experience differs meaningfully, it is called out explicitly.
 
 ---
 
@@ -30,6 +32,8 @@ ITEM_ID=$(echo $ITEMS | jq -r '.[0].id')
 JOB_ID=$(aiseo jobs start --project $PROJECT_ID --content $ITEM_ID | jq -r '.jobId')
 
 # Wait for completion
+# MCP: Use `jobs_wait` (blocks until complete, up to 25s) or poll with `jobs_status`
+# CLI: Use `aiseo jobs wait` (blocks until complete, configurable timeout)
 aiseo jobs wait --id $JOB_ID --timeout 600
 
 # Get deliverables from Drive
@@ -65,6 +69,11 @@ done
 
 # Monitor all running jobs
 aiseo jobs list --project proj_abc --status running --pretty
+
+# Delete content items in bulk (e.g., remove duplicates or bad imports)
+# MCP: content_bulk_delete with array of content item IDs
+# CLI: aiseo content delete --ids ci_1,ci_2,ci_3
+aiseo content delete --ids ci_1,ci_2,ci_3
 ```
 
 ---
@@ -86,6 +95,7 @@ aiseo content update --id $ITEM_ID --status "Refresh"
 
 # Start refresh job
 JOB_ID=$(aiseo jobs start --project proj_abc --content $ITEM_ID | jq -r '.jobId')
+# MCP: Use `jobs_wait` (blocks until complete, up to 25s) or poll with `jobs_status`
 aiseo jobs wait --id $JOB_ID
 ```
 
@@ -133,6 +143,33 @@ See full CMS guides:
 - [WordPress](../cms-skills/wordpress.md)
 - [Webflow](../cms-skills/webflow.md)
 - [Shopify](../cms-skills/shopify.md)
+
+---
+
+## 4b. Export Google Doc as Markdown (MCP)
+
+After a job completes, the generated article lives in Google Drive as a Google Doc. Use `content_export_doc` to get it as clean markdown, ready for CMS publishing. This is the preferred approach for MCP users instead of downloading HTML via the Google Workspace CLI.
+
+### MCP Workflow
+
+1. `drive_folder` — get the project's Google Drive folder ID
+2. Browse the folder to find the Google Doc ID for your content item
+3. `content_export_doc` with `docId` and `userKey` — returns the full article as markdown
+4. Publish the markdown to your CMS (Sanity, WordPress, Webflow, etc.)
+
+### What Gets Preserved
+
+- Headings (H1-H6)
+- Bold, italic, strikethrough, inline code
+- Bullet and numbered lists (with nesting)
+- Tables (converted to markdown pipe tables)
+- Links
+
+### Notes
+
+- `userKey` is the email address that authenticated with the renderer service via `/connect/google`
+- The `docId` is the long string in the Google Doc URL: `docs.google.com/document/d/{docId}/edit`
+- Images are output as `[image]` placeholders — upload images separately from the Drive folder
 
 ---
 
@@ -205,9 +242,12 @@ gws drive files export --params '{"fileId": "sheet_id"}' --download text/csv > l
 
 ## 7. Monitoring and Polling
 
-### Synchronous: Use `jobs wait`
+### Synchronous: Use `jobs wait` / `jobs_wait`
 
 Best for single jobs where you need the result before proceeding.
+
+- **MCP**: Use `jobs_wait` (blocks until complete, up to 25s) or poll with `jobs_status`
+- **CLI**: Use `aiseo jobs wait --id <jobId>` (blocks until complete, configurable timeout)
 
 ```bash
 JOB_ID=$(aiseo jobs start --project proj_abc --content ci_123 | jq -r '.jobId')
@@ -241,9 +281,12 @@ Your webhook receives a POST with:
 
 With `X-Signature-256: sha256=<hmac>` header for verification.
 
-### Polling: Use `jobs status`
+### Polling: Use `jobs status` / `jobs_status`
 
 For custom polling logic.
+
+- **MCP**: Use `jobs_status` with the job ID
+- **CLI**: Use `aiseo jobs status --id <jobId>`
 
 ```bash
 aiseo jobs status --id job_xyz
@@ -259,3 +302,5 @@ aiseo jobs status --id job_xyz
 - **Rate limits**: STARTER = 60 req/min, TEAM = 120 req/min. Add delays in batch loops.
 - **Parallel jobs**: Tenant concurrent job limit applies (default 3). Queue extras and they'll run automatically.
 - **Idempotency**: Content creation is not idempotent — check if an item exists before creating duplicates.
+- **Config**: `config_set` supports all project configuration fields via both CLI (`aiseo config set`) and MCP (`config_set`). Use `config_get` / `aiseo config get` to inspect current values before changing them.
+- **Bulk delete**: Use `content_bulk_delete` (MCP) or `aiseo content delete --ids` (CLI) to remove multiple content items in one call.

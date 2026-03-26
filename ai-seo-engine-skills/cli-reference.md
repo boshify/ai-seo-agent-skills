@@ -304,17 +304,35 @@ aiseo config get --project proj_abc --pretty
 
 ### `aiseo config set`
 
-Update project configuration.
+Update project configuration. Only pass fields you want to change.
 
-| Flag | Required | Description |
-|------|----------|-------------|
-| `--project <id>` | Yes | Project ID |
-| `--language <lang>` | No | Content language |
-| `--country <country>` | No | Target country |
-| `--writing-style <style>` | No | Writing style description |
+| Option | Description |
+|--------|-------------|
+| `--project <projectId>` | **(required)** Project ID |
+| `--language <language>` | Content language (e.g. "English") |
+| `--country <country>` | Target country (e.g. "United States") |
+| `--writing-style <style>` | Writing style/tone instructions |
+| `--writing-samples <samples>` | Example text to match writing style |
+| `--image-style-guide <guide>` | Guidelines for AI image generation |
+| `--source-context <context>` | Background info about the brand/product |
+| `--central-entity <entity>` | Central entity/brand name for topical authority |
+| `--central-search-intent <intent>` | Core search intent the strategy targets |
+| `--core-section <section>` | Core section of the topical map |
+| `--outer-section <section>` | Outer section of the topical map |
+| `--write-to-core <bool>` | Enable writing to core section (true/false) |
+| `--write-to-outer <bool>` | Enable writing to outer section (true/false) |
+| `--automation-settings <json>` | Automation settings as JSON string |
 
+**Examples:**
 ```bash
-aiseo config set --project proj_abc --language "English" --country "US" --writing-style "Professional, authoritative"
+# Set brand context
+aiseo config set --project proj_abc --central-entity "Acme Corp" --source-context "Leading provider of widgets since 1990"
+
+# Set writing style with samples
+aiseo config set --project proj_abc --writing-style "Professional, authoritative" --writing-samples "We believe in quality..."
+
+# Set topical map sections
+aiseo config set --project proj_abc --core-section "Widgets" --outer-section "Industrial Equipment"
 ```
 
 ---
