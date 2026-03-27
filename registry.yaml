@@ -81,3 +81,73 @@ skills:
     chains_to: [ai-seo-engine, cms-wordpress, cms-webflow, cms-shopify]
     tools_used: [curl, jina-reader]
     tags: [scraping, content-extraction, seo, research, sitemap]
+
+  - name: sheet-manager
+    path: sheet-manager/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: creating a tracking spreadsheet, adding or updating rows, checking for duplicates,
+      reading sheet data, or managing tabs within a Google Sheet workbook. Always trigger when a
+      process requires persistent tabular tracking via Google Sheets.
+    inputs: [operation]
+    outputs: [sheet-result, sheet-url]
+    chains_from: []
+    chains_to: [competitor-profile-researcher, profile-creator, brand-info-assembler, existing-profile-checker]
+    tools_used: [gws-cli, curl]
+    tags: [google-sheets, tracking, data-management, automation]
+
+  - name: competitor-profile-researcher
+    path: competitor-profile-researcher/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: discovering which platforms a competitor has profiles on, researching competitor
+      entity signals, or identifying directories and review sites in a niche. Always trigger when
+      given a competitor brand name + URL and asked to find their online profiles.
+    inputs: [competitor_name, competitor_url]
+    outputs: [discovered-profiles]
+    chains_from: [sheet-manager]
+    chains_to: [sheet-manager, existing-profile-checker]
+    tools_used: [brave-search, page-scraper]
+    tags: [competitor-research, profile-discovery, entity-signals, seo]
+
+  - name: profile-creator
+    path: profile-creator/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: creating a new business profile on a directory, citation site, social platform,
+      or review platform via headless browser. Produces a result with profile URL, credentials,
+      status, and notes describing any blockers encountered.
+    inputs: [platform_url, brand_info]
+    outputs: [profile-result]
+    chains_from: [existing-profile-checker, brand-info-assembler, sheet-manager]
+    chains_to: [sheet-manager]
+    tools_used: [browser, curl]
+    tags: [profile-creation, automation, entity-signals, headless-browser]
+
+  - name: brand-info-assembler
+    path: brand-info-assembler/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: assembling brand information and generating unique descriptions for profile
+      creation, directory listings, or any multi-platform presence building. Always trigger when
+      a brand needs unique copy across multiple platforms.
+    inputs: [brand-name, brand-url]
+    outputs: [brand-info-package, platform-description]
+    chains_from: [sheet-manager]
+    chains_to: [profile-creator, existing-profile-checker]
+    tools_used: [page-scraper]
+    tags: [brand-info, content-generation, entity-signals, profile-creation]
+
+  - name: existing-profile-checker
+    path: existing-profile-checker/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: checking if a brand already has a profile on a platform before creating one.
+      ALWAYS trigger before profile-creator to prevent duplicate profiles that fragment entity
+      signals. Also use when auditing a brand's multi-surface presence.
+    inputs: [brand-name, brand-url, platform-url]
+    outputs: [profile-check-verdict]
+    chains_from: [sheet-manager, competitor-profile-researcher]
+    chains_to: [profile-creator, sheet-manager]
+    tools_used: [brave-search, page-scraper]
+    tags: [profile-detection, duplicate-check, entity-signals, profile-creation]
