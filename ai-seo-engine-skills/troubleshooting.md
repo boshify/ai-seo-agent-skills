@@ -145,6 +145,28 @@ aiseo content list --project proj_abc | jq '.[] | select(.keyword == "your keywo
 
 ---
 
+## MCP Connection Issues
+
+### Claude Desktop: "Some MCP servers could not be loaded"
+
+**Cause:** Your version of Claude Desktop doesn't support remote MCP servers (Streamable HTTP). The `url` config field is only recognized in recent versions.
+
+**Fix:**
+1. Update Claude Desktop to the latest version (Help → Check for Updates, or re-download from https://claude.ai/download)
+2. Restart Claude Desktop after updating
+3. Your config is likely correct — older versions just don't recognize the `url` field
+
+**Alternative:** Use Claude.ai (web) instead — go to Settings → Integrations, paste `https://aiseoengine.studio/api/mcp`, and sign in with OAuth. No API key needed.
+
+### MCP tools not appearing after connecting
+
+**Fix:**
+- Verify the URL is exactly `https://aiseoengine.studio/api/mcp`
+- Try disconnecting and reconnecting the server
+- Restart your client (Claude Desktop, Cursor, etc.)
+
+---
+
 ## CLI Installation Issues
 
 ### "aiseo: command not found"

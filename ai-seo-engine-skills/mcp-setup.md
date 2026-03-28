@@ -171,6 +171,14 @@ The AI will:
 ### "Rate limit exceeded" (429)
 API keys are rate-limited (60 req/min on Starter, 120 on Team). Wait and retry.
 
+### Claude Desktop: "Some MCP servers could not be loaded"
+Claude Desktop requires a recent version to support remote MCP servers (Streamable HTTP). If you see this error:
+1. Update Claude Desktop to the latest version (Help → Check for Updates, or re-download from [claude.ai/download](https://claude.ai/download))
+2. Restart Claude Desktop after updating
+3. Your config is likely correct — older versions just don't recognize the `url` field
+
+If you can't update, use **Claude.ai** (web) instead — go to Settings → Integrations, paste the MCP URL, and OAuth handles auth automatically with no API key needed.
+
 ### Tools not appearing
 - Verify the URL is exactly `https://aiseoengine.studio/api/mcp`
 - Check that your client supports remote MCP servers
