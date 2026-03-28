@@ -59,7 +59,9 @@ All sheet operations go through the Google Workspace CLI (`gws`). The agent exec
 
 `gws` authenticates via a **Google Cloud service account**. The credentials JSON file is written to disk on container startup and referenced by the `GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE` env var. This is fully managed by the Omnipresence team — the agent and member never handle credentials directly.
 
-The service account email (e.g., `name@project.iam.gserviceaccount.com`) must be shared as an Editor on any Google Sheet the agent needs to access. When creating new sheets, the service account owns them automatically.
+The service account email (e.g., `name@project.iam.gserviceaccount.com`) must be added as a member of the member's **shared drive** — not just shared on individual folders or files. Sharing a folder within a shared drive does not grant the service account query access. When creating new sheets, the service account owns them automatically.
+
+When querying files in shared drives, always include `"supportsAllDrives": true` and `"includeItemsFromAllDrives": true` in API params, otherwise shared drive content won't appear in results.
 
 If authentication fails, the agent cannot proceed. Tell the member to contact Omnipresence support — do not attempt to create, modify, or troubleshoot credentials.
 
