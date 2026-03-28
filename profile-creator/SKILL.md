@@ -152,9 +152,14 @@ The profile URL is the primary deliverable that proves the profile exists.
 **Status values:**
 - `created` — Profile is live and accessible at `profile_url`
 - `paywall` — Platform requires payment before profile creation or completion
-- `captcha_required` — CAPTCHA blocked progress; manual intervention needed
-- `verification_needed` — Email, phone, or 2FA verification required to continue
-- `other_blocker` — Any other issue (account exists, platform down, form broken, etc.)
+- `captcha_required` — CAPTCHA blocked progress; notes must include signup URL + pre-filled field values for manual completion
+- `verification_needed` — Email, phone, or 2FA verification required to continue; notes must include signup URL + pre-filled field values if account was not yet created
+- `other_blocker` — Any other issue (bot detection, account exists, platform down, form broken, etc.); if browser automation failed, notes must include signup URL + pre-filled field values
+
+**Manual assist package (required for all browser-failure statuses):**
+When any blocker prevents automated profile creation, the `notes` field must include a copy-paste-ready package so the member can complete it manually in under a minute:
+- **Signup URL:** The direct registration/sign-up page URL
+- **Fields:** Business name, description (the unique platform description), website URL, category, email, password — each on its own line, clearly labeled
 
 ## Edge Cases & Judgment Calls
 
@@ -180,7 +185,10 @@ Select the closest parent category available. If "Digital Marketing Agency" is n
 Complete each step sequentially. If a step requires information not available in the brand info package, fill what you can and proceed. If a step blocks entirely (e.g., mandatory phone verification mid-wizard), report the step number and blocker.
 
 **Platform detects headless browser and blocks access:**
-Return status `other_blocker` with notes indicating bot detection. Do not attempt to bypass bot detection mechanisms — this is outside the skill's scope.
+Return status `other_blocker` with a **manual assist package** in the notes. This must include:
+1. The direct signup/registration URL the member should visit
+2. All pre-filled field values formatted for easy copy-paste (business name, description, website, category, email, password)
+The member should be able to open the link and complete registration in under a minute using the notes. Do not attempt to bypass bot detection mechanisms — this is outside the skill's scope.
 
 ## What This Skill Does NOT Do
 
@@ -294,6 +302,6 @@ Return status `other_blocker` with notes indicating bot detection. Do not attemp
   "status": "captcha_required",
   "fields_filled": ["email"],
   "fields_skipped": ["business_name", "description", "website", "category", "logo"],
-  "notes": "Registration form presents a reCAPTCHA v2 challenge on submission. Account was not created. Manual step: complete CAPTCHA at https://www.avvo.com/registration, then profile fields can be filled in a follow-up invocation or manually."
+  "notes": "Registration form presents a reCAPTCHA v2 challenge on submission. Account was not created.\n\n**Manual signup — copy-paste ready:**\nSignup URL: https://www.avvo.com/registration\nBusiness name: Summit Legal\nDescription: Summit Legal is a full-service law firm in Denver, CO offering business litigation, employment law, and contract negotiation for small and mid-size companies.\nWebsite: https://summitlegal.com\nCategory: Law Firm\nEmail: listings@summitlegal.com\nPassword: Kp5#wN8mR!2v"
 }
 ```
