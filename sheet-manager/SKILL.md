@@ -53,7 +53,74 @@ Creates and manages Google Sheets as structured tracking systems for multi-step 
 
 ## Context the Agent Needs
 
-All sheet operations go through the AI SEO Engine's Google Workspace integration (`gws-cli` or the equivalent API). The agent must have a valid Google Workspace connection configured in the AI SEO Engine project before using this skill. Sheet IDs are the alphanumeric string from the Google Sheets URL (`https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit`). When creating sheets, the API returns the new sheet ID — store it for all subsequent operations on that sheet. Tabs (individual sheets within a workbook) are referenced by name, not index.
+All sheet operations go through the Google Workspace CLI (`gws`). The agent executes `gws` commands via the exec tool.
+
+### Authentication
+
+`gws` authenticates via a **Google Cloud service account**. The credentials JSON file is written to disk on container startup and referenced by the `GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE` env var. This is fully managed by the Omnipresence team — the agent and member never handle credentials directly.
+
+The service account email (e.g., `name@project.iam.gserviceaccount.com`) must be shared as an Editor on any Google Sheet the agent needs to access. When creating new sheets, the service account owns them automatically.
+
+If authentication fails, the agent cannot proceed. Tell the member to contact Omnipresence support — do not attempt to create, modify, or troubleshoot credentials.
+
+### Verify access before any operation
+
+```bash
+gws drive about get --params '{"fields": "user"}'
+```
+
+If this returns a user object, authentication is working. If it errors, stop and report.
+
+### Sheet IDs
+
+Sheet IDs are the alphanumeric string from the Google Sheets URL: `https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit`. When creating sheets, the API returns the new sheet ID — store it for all subsequent operations on that sheet. Tabs (individual sheets within a workbook) are referenced by name, not index.
+
+### Core `gws` commands
+
+**Read a sheet range:**
+```bash
+gws sheets +read --spreadsheet-id "SHEET_ID" --range "Sheet1!A1:Z"
+```
+Returns JSON with a `values` array of rows. Parse with `jq`:
+```bash
+gws sheets +read --spreadsheet-id "SHEET_ID" --range "Sheet1!A1:D100" | jq '.values[]'
+```
+
+**List spreadsheets in a folder:**
+```bash
+gws drive files list --params '{
+  "q": "'FOLDER_ID' in parents and mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false",
+  "fields": "files(id,name)"
+}'
+```
+
+**Export a sheet as CSV:**
+```bash
+gws drive files export --params '{"fileId": "SHEET_ID"}' --download text/csv > data.csv
+```
+
+For creating sheets, writing rows, and applying data validation, use the Google Sheets API via `curl` with the access token from `gws auth print-access-token`, since `gws` does not have built-in write commands:
+```bash
+TOKEN=$(gws auth print-access-token)
+
+# Create a new spreadsheet
+curl -s -X POST "https://sheets.googleapis.com/v4/spreadsheets" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"properties": {"title": "Sheet Name"}}' | jq '{id: .spreadsheetId, url: .spreadsheetUrl}'
+
+# Append a row
+curl -s -X POST "https://sheets.googleapis.com/v4/spreadsheets/SHEET_ID/values/Sheet1!A1:append?valueInputOption=USER_ENTERED" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"values": [["col1_value", "col2_value", "col3_value"]]}'
+
+# Update a specific cell range
+curl -s -X PUT "https://sheets.googleapis.com/v4/spreadsheets/SHEET_ID/values/Sheet1!A2:C2?valueInputOption=USER_ENTERED" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"values": [["new_val1", "new_val2", "new_val3"]]}'
+```
 
 ## Workflow Steps
 
@@ -63,9 +130,10 @@ Determine whether to create a new sheet or operate on an existing one.
 
 **Input:** User request with optional `sheet-id`
 **Process:**
-1. If `sheet-id` is provided, verify the sheet exists and is accessible by reading row 1 (headers)
-2. If no `sheet-id` and operation is `create-sheet`, proceed to Step 2
-3. If no `sheet-id` and operation requires an existing sheet, ask the user for the sheet ID or URL
+1. Verify Google Workspace access: `gws drive about get --params '{"fields": "user"}'`. If this fails, stop and troubleshoot auth with the member.
+2. If `sheet-id` is provided, verify the sheet exists by reading row 1: `gws sheets +read --spreadsheet-id "SHEET_ID" --range "Sheet1!1:1"`
+3. If no `sheet-id` and operation is `create-sheet`, proceed to Step 2
+4. If no `sheet-id` and operation requires an existing sheet, ask the user for the sheet ID or URL
 **Output:** Confirmed sheet ID and current header row (if existing sheet)
 **Decision gate:**
 - If `create-sheet` operation → proceed to Step 2
@@ -77,11 +145,24 @@ Set up the sheet with the correct column structure and data validation.
 
 **Input:** `sheet-name` and `columns` definition
 **Process:**
-1. Create a new Google Sheet with the specified name via `gws-cli`
-2. Write the header row using the column names from `columns`
-3. For any column with a `dropdown` field, apply data validation restricting that column to the specified values (e.g., Status: ["Not Started", "In Progress", "Complete", "Error"])
-4. Freeze the header row
-5. Store and return the new sheet ID and URL
+1. Get an access token: `TOKEN=$(gws auth print-access-token)`
+2. Create a new Google Sheet via Sheets API:
+   ```bash
+   curl -s -X POST "https://sheets.googleapis.com/v4/spreadsheets" \
+     -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"properties": {"title": "SHEET_NAME"}}' | jq '{id: .spreadsheetId, url: .spreadsheetUrl}'
+   ```
+3. Write the header row using the column names from `columns`:
+   ```bash
+   curl -s -X PUT "https://sheets.googleapis.com/v4/spreadsheets/SHEET_ID/values/Sheet1!A1:Z1?valueInputOption=USER_ENTERED" \
+     -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"values": [["Column1", "Column2", ...]]}'
+   ```
+4. For any column with a `dropdown` field, apply data validation via a batchUpdate request restricting that column to the specified values (e.g., Status: ["Not Started", "In Progress", "Complete", "Error"])
+5. Freeze the header row via batchUpdate
+6. Store and return the new sheet ID and URL
 **Output:** Sheet ID, sheet URL, and confirmation of column structure
 **Decision gate:**
 - If sheet created successfully → return result or proceed to Step 3 if additional operations were requested
@@ -93,10 +174,17 @@ Perform the read, add, or update operation on the target sheet.
 
 **Input:** Operation type, sheet ID, and operation-specific parameters
 **Process:**
-1. **read-rows:** Fetch all rows, or filter to rows where `filter-column` matches `filter-value`
-2. **add-row:** First check for duplicates by matching `filter-column` against existing rows. If no duplicate found, append the new row. If duplicate exists, report it and skip the add.
-3. **update-row:** Locate the target row by matching `filter-column` = `filter-value`, then update only the specified cells in `row-data`
-4. **add-tab:** Create a new tab within the existing workbook, optionally with its own column structure
+1. **read-rows:** Fetch all rows via `gws sheets +read --spreadsheet-id "SHEET_ID" --range "Sheet1!A1:Z"`, then filter locally to rows where `filter-column` matches `filter-value` if specified
+2. **add-row:** First read all rows and check for duplicates by matching `filter-column` against existing values. If no duplicate found, append via Sheets API:
+   ```bash
+   curl -s -X POST "https://sheets.googleapis.com/v4/spreadsheets/SHEET_ID/values/Sheet1!A1:append?valueInputOption=USER_ENTERED" \
+     -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"values": [["val1", "val2", ...]]}'
+   ```
+   If duplicate exists, report it and skip the add.
+3. **update-row:** Read all rows to locate the target row by matching `filter-column` = `filter-value`, then update the specific cell range via Sheets API PUT
+4. **add-tab:** Create a new tab within the existing workbook via batchUpdate `addSheet` request, optionally with its own column structure
 **Output:** Operation result (row data for reads, row number for adds, confirmation for updates)
 **Decision gate:**
 - If operation succeeds → return result
@@ -171,7 +259,7 @@ Use a sensible default for the process context. For profile tracking, default to
 Return all matching rows and ask the caller which one to update. Never silently update all matches — that risks corrupting tracked data.
 
 **Failed tool call — Google Workspace API error:**
-Report the exact error from `gws-cli`. Common causes: expired auth token (re-authenticate), sheet not shared with the service account (share it), rate limit (wait and retry once). Do not retry more than once automatically.
+Report the exact error from `gws` or the Sheets API response. Common causes: expired auth token (`GOOGLE_WORKSPACE_CLI_TOKEN` needs refreshing — ask the member to contact support), sheet not shared with the authenticated account (share it), rate limit (wait and retry once). Do not retry more than once automatically.
 
 **Oversized read — sheet has hundreds of rows:**
 Return only the first 50 rows with a count of total rows. Offer to filter by column value or return a specific range. Never dump hundreds of rows into the conversation context.
