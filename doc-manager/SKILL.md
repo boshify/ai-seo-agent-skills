@@ -301,6 +301,9 @@ Always include the doc URL in every response. Doc IDs should be surfaced for sto
 **Template not shared with service account:**
 Drive API returns 404 (not 403) when the service account can't see a file. If clone fails with "File not found," the template hasn't been shared. Ask the member to share the template doc with the service account email (visible in `gws drive about get`).
 
+**CRITICAL — Never narrate a failure without showing raw output:**
+If any API call fails, paste the exact curl response before concluding what the error means. Do NOT tell the member "the service account can't access this doc" based on an assumed or fabricated response. If the response is empty or unclear, say so explicitly and retry once. Only ask the member to take action (e.g., share the doc) after showing the actual error JSON that proves access is denied. This prevents false permission errors that waste the member's time.
+
 **Placeholder not found in doc (`occurrencesChanged: 0`):**
 Most common causes: wrong case, extra spaces inside the braces, slightly different spelling. Read the doc as plain text, search for the placeholder string, and report the exact text found near where the placeholder should be. Don't guess — show the member what's actually in the doc.
 
