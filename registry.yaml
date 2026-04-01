@@ -152,6 +152,21 @@ skills:
     tools_used: [brave-search, page-scraper]
     tags: [profile-detection, duplicate-check, entity-signals, profile-creation]
 
+  - name: doc-manager
+    path: doc-manager/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: creating a new Google Doc, cloning a template and filling placeholders,
+      reading doc content, or appending content to an existing doc. Always trigger when
+      a process requires producing or editing a Google Doc deliverable — reports, briefs,
+      ICPs, or any structured document.
+    inputs: [operation, doc-id, doc-title, folder-id, placeholders, content]
+    outputs: [doc-result, doc-url]
+    chains_from: []
+    chains_to: []
+    tools_used: [gws-cli, curl]
+    tags: [google-docs, document-management, template-filling, deliverable]
+
   - name: market-research
     path: market-research/SKILL.md
     version: "1.0"
