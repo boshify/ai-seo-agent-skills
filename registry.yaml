@@ -151,3 +151,65 @@ skills:
     chains_to: [profile-creator, sheet-manager]
     tools_used: [brave-search, page-scraper]
     tags: [profile-detection, duplicate-check, entity-signals, profile-creation]
+
+  - name: market-research
+    path: market-research/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: the target-market-landscape-analysis process reaches Step 2 (market research),
+      or when a member asks about their market size, TAM, industry landscape, or market trends.
+      Produces a structured market overview with TAM estimate, growth trajectory, and demand
+      signals. Always trigger when market sizing, TAM, industry analysis, or market research
+      intent is present.
+    inputs: [industry-description]
+    outputs: [market-overview]
+    chains_from: []
+    chains_to: [competitor-landscape-research]
+    tools_used: [web-search]
+    tags: [market-research, tam, industry-analysis, target-market-landscape]
+
+  - name: competitor-landscape-research
+    path: competitor-landscape-research/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: the target-market-landscape-analysis process reaches Step 3 (competitor research),
+      or when asked to research a specific competitor's SEO metrics, AI visibility, and positioning.
+      Designed to run as a sub-agent skill — one instance per competitor, parallelized. Always
+      trigger when competitor research, competitor analysis, or competitive intelligence is needed.
+    inputs: [competitor-domain, competitor-brand-name]
+    outputs: [competitor-profile]
+    chains_from: [market-research]
+    chains_to: [proof-catalog]
+    tools_used: [ahrefs-api, web-fetch]
+    tags: [competitor-research, ahrefs, ai-visibility, brand-radar, target-market-landscape]
+
+  - name: proof-catalog
+    path: proof-catalog/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: the target-market-landscape-analysis process reaches Step 7 (proof catalog),
+      or when asked to audit a member's proof assets, credibility signals, or trust indicators.
+      Produces a ranked proof inventory with gap analysis based on outcome-proximity. Always
+      trigger when proof, trust signals, testimonials, case studies, or credibility auditing
+      is requested.
+    inputs: [brand-url]
+    outputs: [proof-inventory]
+    chains_from: [competitor-landscape-research]
+    chains_to: [landscape-report-generator]
+    tools_used: [web-fetch, page-scraper]
+    tags: [proof-catalog, trust-signals, credibility, case-studies, target-market-landscape]
+
+  - name: landscape-report-generator
+    path: landscape-report-generator/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: the target-market-landscape-analysis process reaches Step 8 (compile report),
+      or when a completed landscape analysis needs to be formatted into a branded Google Doc
+      deliverable. Produces a completed branded Target Market Landscape Report. Always trigger
+      when landscape report generation or report assembly for market analysis is requested.
+    inputs: [market-overview, competitor-profiles, differentiation-angle, proof-inventory]
+    outputs: [landscape-report-google-doc]
+    chains_from: [proof-catalog]
+    chains_to: []
+    tools_used: [gws-cli]
+    tags: [report-generation, google-docs, target-market-landscape, deliverable]
