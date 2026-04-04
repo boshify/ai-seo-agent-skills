@@ -214,6 +214,69 @@ skills:
     tools_used: [web-fetch, page-scraper]
     tags: [proof-catalog, trust-signals, credibility, case-studies, target-market-landscape]
 
+  - name: entity-extractor
+    path: entity-extractor/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: extracting entity-attribute pairs from User Stories, or when asked to identify
+      what entity and attribute a User Story maps to. Always trigger when converting a User Story
+      into a searchable pair, or when someone says "extract the entity", "what's the entity-attribute
+      pair", "what would they search", or "derive the pair from this story". First step in the
+      stories-to-queries pipeline — runs before verbalization-generator.
+    inputs: [user-story, business-context]
+    outputs: [entity-attribute-pair]
+    chains_from: [user-stories]
+    chains_to: [verbalization-generator]
+    tools_used: [knowledge-graph-mcp]
+    tags: [seo, entity, query-derivation, stories-to-queries]
+
+  - name: verbalization-generator
+    path: verbalization-generator/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: generating all the ways someone might search for an entity-attribute pair.
+      Always trigger when verbalization expansion is needed, or when someone says "generate
+      verbalizations", "what else would they search", "expand this pair", "find all the ways
+      people search for this", or "get autosuggest for this". Runs after entity-extractor,
+      before volume-checker.
+    inputs: [entity-attribute-pair, business-context, member-suggestions]
+    outputs: [verbalization-set]
+    chains_from: [entity-extractor]
+    chains_to: [volume-checker]
+    tools_used: [web_search]
+    tags: [seo, query-derivation, verbalization, stories-to-queries]
+
+  - name: volume-checker
+    path: volume-checker/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: checking search volume and keyword difficulty for an entity-attribute pair and
+      its verbalizations. Always trigger when volume data is needed, or when someone says "check
+      volume", "what's the search volume", "pull keyword data", "check Ahrefs", or "validate
+      this keyword". Runs after verbalization-generator, before serp-validator.
+    inputs: [entity-attribute-pair, verbalizations, country, market-context]
+    outputs: [volume-report]
+    chains_from: [verbalization-generator]
+    chains_to: [serp-validator]
+    tools_used: [Ahrefs:keywords-explorer-overview]
+    tags: [seo, volume, keyword-research, stories-to-queries]
+
+  - name: serp-validator
+    path: serp-validator/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: validating whether verbalizations of an entity-attribute pair share SERP intent
+      (one page) or diverge (separate pages). Always trigger when SERP intent comparison is needed,
+      or when someone says "check the SERPs", "do these share intent", "should this be one page or
+      two", "validate against SERPs", or "check if these overlap". Final step in the
+      stories-to-queries pipeline — runs after volume-checker.
+    inputs: [entity-attribute-pair, verbalizations-to-compare, additional-attributes]
+    outputs: [serp-validation-report]
+    chains_from: [volume-checker]
+    chains_to: []
+    tools_used: [web_search, web_fetch]
+    tags: [seo, serp-validation, content-architecture, stories-to-queries]
+
   - name: landscape-report-generator
     path: landscape-report-generator/SKILL.md
     version: "1.0"
