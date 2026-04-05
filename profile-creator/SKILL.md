@@ -1,11 +1,12 @@
 ---
 name: profile-creator
-version: "1.0"
+version: "2.0"
 description: >
-  Create a business profile on a target platform using a headless browser, filling all available
-  text fields and uploading a logo if the mechanism is straightforward. Use this skill whenever
-  a new profile needs to be created on a directory, citation site, social platform, or review
-  platform. This skill produces a result object with profile URL, credentials, status, and notes.
+  Create a business profile on a target platform using a stealth headless browser, filling all available
+  text fields and uploading a logo if the mechanism is straightforward. Uses playwright-stealth to bypass
+  bot detection and CapSolver to resolve CAPTCHAs inline. Use this skill whenever a new profile needs to
+  be created on a directory, citation site, social platform, or review platform. This skill produces a
+  result object with profile URL, credentials, status, and notes.
 
 inputs:
   required:
@@ -18,7 +19,7 @@ inputs:
   optional:
     - type: text
       label: "logo_path"
-      description: "Local file path or Drive URL to the brand logo/image for upload"
+      description: "Local file path to the brand logo/image for upload"
     - type: text
       label: "phone"
       description: "Business phone number if the platform requests one"
@@ -31,106 +32,213 @@ outputs:
     label: "profile-result"
     description: "Object with: profile_url, credentials (email, password), status (created | paywall | captcha_required | verification_needed | other_blocker), notes"
 
-tools_used: [browser, curl]
+tools_used: [exec, curl]
 chains_from: [existing-profile-checker, brand-info-assembler, sheet-manager]
 chains_to: [sheet-manager]
-tags: [profile-creation, automation, entity-signals, headless-browser]
+tags: [profile-creation, automation, entity-signals, stealth-browser, capsolver]
 ---
 
 ## What This Skill Does
 
-Navigates to a target platform via headless browser, creates a new account with provided credentials, and fills every available text-based profile field with brand information. Returns the profile URL on success or a structured status report describing the blocker encountered.
+Navigates to a target platform via stealth headless browser, creates a new account with provided credentials, and fills every available text-based profile field with brand information. Uses `playwright-stealth` to remove bot detection signals and `capsolver` to solve CAPTCHAs (reCAPTCHA v2/v3, hCaptcha, Cloudflare Turnstile) automatically. Returns the profile URL on success or a structured status report describing the blocker encountered.
+
+## Execution Model
+
+This skill uses **exec** (not the browser tool) to run a Python stealth script. The agent writes the script for the specific platform's registration flow, then runs it via exec.
+
+**Never use the `browser` tool for profile creation. Always use exec with the stealth script pattern below.**
+
+## Stealth Script Pattern
+
+Every profile creation script must start with this boilerplate. The agent adapts the `# --- Registration flow ---` section for each platform:
+
+```python
+#!/usr/bin/env python3
+import asyncio, json, os, sys
+from playwright.async_api import async_playwright
+from playwright_stealth import stealth_async
+import capsolver
+
+capsolver.api_key = os.environ.get("CAPSOLVER_API_KEY", "")
+
+async def solve_captcha_if_present(page, url):
+    """Detect and solve any CAPTCHA on the current page. Returns True if one was solved."""
+    try:
+        # hCaptcha
+        hcaptcha_key = await page.evaluate("""
+            () => {
+                const el = document.querySelector('[data-sitekey]');
+                if (!el) return null;
+                const parent = el.closest('.h-captcha, [class*="hcaptcha"]');
+                return parent ? el.getAttribute('data-sitekey') : null;
+            }
+        """)
+        if hcaptcha_key:
+            sol = capsolver.solve({
+                "type": "HCaptchaTaskProxyLess",
+                "websiteURL": url,
+                "websiteKey": hcaptcha_key
+            })
+            await page.evaluate(
+                f"(() => {{ const r = document.querySelector('[name=\"h-captcha-response\"]'); if (r) r.value = '{sol[\"gRecaptchaResponse\"]}'; }})()"
+            )
+            return True
+
+        # reCAPTCHA v2
+        recaptcha_el = await page.query_selector('.g-recaptcha')
+        if recaptcha_el:
+            recaptcha_key = await recaptcha_el.get_attribute('data-sitekey')
+            if recaptcha_key:
+                sol = capsolver.solve({
+                    "type": "ReCaptchaV2TaskProxyLess",
+                    "websiteURL": url,
+                    "websiteKey": recaptcha_key
+                })
+                await page.evaluate(
+                    f"(() => {{ const r = document.getElementById('g-recaptcha-response'); if (r) r.value = '{sol[\"gRecaptchaResponse\"]}'; }})()"
+                )
+                return True
+
+        # Cloudflare Turnstile
+        turnstile_el = await page.query_selector('.cf-turnstile')
+        if turnstile_el:
+            turnstile_key = await turnstile_el.get_attribute('data-sitekey')
+            if turnstile_key:
+                sol = capsolver.solve({
+                    "type": "AntiTurnstileTaskProxyLess",
+                    "websiteURL": url,
+                    "websiteKey": turnstile_key
+                })
+                await page.evaluate(
+                    f"(() => {{ const r = document.querySelector('[name=\"cf-turnstile-response\"]'); if (r) r.value = '{sol[\"token\"]}'; }})()"
+                )
+                return True
+
+    except Exception as e:
+        # CapSolver failed (unknown type, API error, insufficient balance) — log and continue
+        print(json.dumps({"status": "captcha_required", "error": str(e)}), file=sys.stderr)
+
+    return False
+
+async def main():
+    chromium_path = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH", "/usr/bin/chromium")
+    result = {"status": "other_blocker", "profile_url": None, "notes": ""}
+
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                executable_path=chromium_path,
+                headless=True,
+                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu",
+                      "--window-size=1280,800"]
+            )
+            context = await browser.new_context(
+                viewport={"width": 1280, "height": 800},
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                locale="en-US",
+                timezone_id="America/New_York"
+            )
+            page = await context.new_page()
+            await stealth_async(page)  # MUST be called before any navigation
+
+            # --- Registration flow (agent writes this section per platform) ---
+            # Example structure:
+            #
+            # await page.goto("https://example.com/signup", wait_until="networkidle")
+            # await solve_captcha_if_present(page, page.url)
+            #
+            # await page.fill('[name="email"]', brand_info["email"])
+            # await page.fill('[name="password"]', brand_info["password"])
+            # await page.click('button[type="submit"]')
+            # await page.wait_for_load_state("networkidle")
+            # await solve_captcha_if_present(page, page.url)
+            #
+            # ... fill profile fields ...
+            #
+            # result = {"status": "created", "profile_url": page.url, "notes": ""}
+
+            await browser.close()
+
+    except Exception as e:
+        result["notes"] = str(e)
+
+    print(json.dumps(result))
+
+asyncio.run(main())
+```
+
+**Script execution:**
+```bash
+python3 /tmp/profile_creator_{platform}.py
+```
+
+Write the script to `/tmp/`, run it via exec, parse the JSON from stdout.
+
+**CAPTCHA calling convention:**
+- Call `await solve_captcha_if_present(page, page.url)` after every `page.goto()` and after every form submit
+- CapSolver handles reCAPTCHA v2, hCaptcha, and Cloudflare Turnstile automatically
+- If CapSolver raises (unknown type, API error), the script logs to stderr and continues — the caller catches `captcha_required` from the result if the flow couldn't proceed
+- reCAPTCHA v3 (invisible, score-based) does not need solving — stealth alone is sufficient for most v3 gates
 
 ## Context the Agent Needs
 
-Every platform has a different registration flow — some require email verification before profile editing, some gate features behind a paywall after account creation, and some present CAPTCHAs mid-flow. The agent must attempt the fullest possible profile completion in a single session but gracefully exit and report when it hits an unautomatable wall. Each platform invocation gets a unique `platform_description` from the brand info package — never reuse the same description across platforms, as duplicate content across citation profiles damages entity signal quality.
+Every platform has a different registration flow. The agent must inspect the platform's signup page structure (via `web_fetch` or a quick page snapshot before writing the script) to understand the form fields and submit flow. Each platform invocation gets a unique `platform_description` from the brand info package — never reuse the same description across platforms.
 
 ## Workflow Steps
 
-### STEP 1: Navigate to the platform and locate the registration flow
+### STEP 1: Inspect the registration flow
 
-Understanding the registration entry point determines whether the platform is automatable at all.
+Before writing the script, understand the form structure.
 
-**Input:** `platform_url` from inputs
 **Process:**
-1. Launch headless browser and navigate to `platform_url`
-2. Wait for the page to fully load (network idle or DOM stable)
-3. Identify the sign-up or registration form — look for "Sign Up", "Create Account", "Register", or "Claim Your Listing" CTAs
-4. If no registration form is visible, check for a link to a separate sign-up page and navigate there
-5. If the page redirects to a login-only flow, check for a "Create Account" or "New User" link
-**Output:** Browser positioned on the registration form, or a blocker identified
+1. Use `web_fetch` on `platform_url` to read the page HTML/structure
+2. Identify: form field names/selectors, submit button selector, multi-step vs single-page flow, any visible CAPTCHA widget
+3. Note any redirects after registration (dashboard URL pattern, profile edit URL)
+**Output:** Enough information to write targeted selectors in the script
 **Decision gate:**
-- If registration form is found → proceed to Step 2
-- If paywall blocks registration → return status `paywall` with notes describing the paywall
-- If no registration path exists → return status `other_blocker` with notes
+- If registration path is clear → proceed to write and run the script (Steps 2–5)
+- If page is completely inaccessible (connection refused, 403 before any interaction) → return status `other_blocker`
+- If paywall is evident from the page content → return status `paywall`
 
-### STEP 2: Create the account
+### STEP 2: Write and run the account creation script
 
-Account creation is the prerequisite for all profile field population.
-
-**Input:** `brand_info.email`, `brand_info.password`, and the registration form from Step 1
 **Process:**
-1. Fill the email field with `brand_info.email`
-2. Fill the password field with `brand_info.password` (and confirm-password if present)
-3. Fill any other required fields (first name, last name, business name) using brand info
-4. Accept terms of service checkbox if present
-5. Submit the registration form
-**Output:** Account created confirmation, or a blocker encountered
+1. Write a Python script using the stealth pattern above, filling in the registration form selectors from Step 1
+2. Include `await solve_captcha_if_present(page, page.url)` after the submit click
+3. Run the script via exec: `python3 /tmp/profile_creator_{platform_domain}.py`
+4. Parse the JSON result from stdout
+**Output:** Account created and logged in, or a blocker status
 **Decision gate:**
-- If account is created and redirected to profile/dashboard → proceed to Step 3
-- If CAPTCHA appears → return status `captcha_required` with notes
-- If email verification is required before proceeding → return status `verification_needed` with notes including what verification method is required
-- If phone verification or 2FA is required → return status `verification_needed` with notes specifying phone/2FA requirement
-- If "email already registered" → return status `other_blocker` with notes
+- If `status: created` or session shows logged-in dashboard → proceed to Step 3
+- If result contains `status: captcha_required` (CapSolver failed or unsupported type) → return that status with manual assist package
+- If `status: verification_needed` → return that status with notes
+- If script errors or times out → retry once; if still failing, return `other_blocker`
 
 ### STEP 3: Fill all available profile fields
 
-Maximizing field completion strengthens the entity signal from this profile.
-
-**Input:** `brand_info` package, optional `phone`, optional `address`, profile editing interface from Step 2
 **Process:**
-1. Navigate to the profile editing section if not already there (look for "Edit Profile", "Business Info", "Settings")
-2. Fill business name with `brand_info.name`
-3. Fill description/about/bio with `brand_info.platform_description` — this text is unique to this platform
-4. Fill website URL with `brand_info.website_url`
-5. Fill category/industry with `brand_info.category` — use the closest match from any dropdown, or type it if free-text
-6. Fill every other visible text field that is relevant: phone, address, hours, tagline, social links
+1. Extend the script (or write a follow-up script) to navigate to the profile editing section
+2. Fill: business name, description (`platform_description`), website URL, category, phone (if provided), address (if provided)
+3. Fill any other visible text fields relevant to the brand
+4. Run via exec
 **Output:** All automatable text fields populated
-**Decision gate:**
-- If all fields are filled and saveable → proceed to Step 4
-- If profile form requires fields not in the brand info package → fill what is available, note missing fields, proceed to Step 4
 
 ### STEP 4: Upload logo if applicable
 
-A logo strengthens visual entity recognition across platforms.
-
-**Input:** `logo_path` (optional), the profile editing interface
 **Process:**
 1. If `logo_path` is not provided → skip to Step 5
-2. Locate the logo/avatar/image upload element on the profile page
-3. If the upload mechanism is a standard file input (`<input type="file">`) → set the file path and trigger upload
-4. If the upload requires cropping, drag-and-drop only, or a complex modal workflow → skip and note in output
-5. Confirm the image uploaded successfully (check for preview thumbnail or success message)
-**Output:** Logo uploaded, or note explaining why it was skipped
-**Decision gate:**
-- If upload succeeded or was skipped → proceed to Step 5
-- If upload caused an error → note the error, proceed to Step 5
+2. Add logo upload to the script: locate `<input type="file">`, call `page.set_input_files(selector, logo_path)`
+3. Run via exec, confirm success (check for thumbnail or success message)
+**Output:** Logo uploaded, or note explaining skip
 
 ### STEP 5: Save and capture the profile URL
 
-The profile URL is the primary deliverable that proves the profile exists.
-
-**Input:** Completed profile form from Steps 3-4
 **Process:**
-1. Click "Save", "Update Profile", "Submit", or equivalent button
-2. Wait for save confirmation
-3. Navigate to the public-facing profile page (look for "View Profile", "Public Profile", or construct from username/slug)
-4. Capture the profile URL from the browser address bar
-5. If no public profile URL is discoverable, note this and use the dashboard URL
-**Output:** Profile result object
-**Decision gate:**
-- If profile URL captured → return result with status `created`
-- If save failed → return status `other_blocker` with error details
+1. Click Save/Submit in the script
+2. Navigate to the public profile page
+3. Capture the URL
+4. Return the final result JSON
+**Output:** Profile result object with `status: created` and `profile_url`
 
 ## Output Format
 
@@ -152,80 +260,61 @@ The profile URL is the primary deliverable that proves the profile exists.
 **Status values:**
 - `created` — Profile is live and accessible at `profile_url`
 - `paywall` — Platform requires payment before profile creation or completion
-- `captcha_required` — CAPTCHA blocked progress; notes must include signup URL + pre-filled field values for manual completion
-- `verification_needed` — Email, phone, or 2FA verification required to continue; notes must include signup URL + pre-filled field values if account was not yet created
-- `other_blocker` — Any other issue (bot detection, account exists, platform down, form broken, etc.); if browser automation failed, notes must include signup URL + pre-filled field values
+- `captcha_required` — CAPTCHA type not supported by CapSolver, or CapSolver API failed; notes must include manual assist package
+- `verification_needed` — Email, phone, or 2FA verification required to continue
+- `other_blocker` — Any other issue (account exists, platform down, form broken, stealth still detected, etc.)
 
-**Manual assist package (required for all browser-failure statuses):**
-When any blocker prevents automated profile creation, the `notes` field must include a copy-paste-ready package so the member can complete it manually in under a minute:
-- **Signup URL:** The direct registration/sign-up page URL
-- **Fields:** Business name, description (the unique platform description), website URL, category, email, password — each on its own line, clearly labeled
+**Manual assist package (required for all non-`created` statuses):**
+Notes must include a copy-paste-ready package: signup URL, business name, description, website, category, email, password — each clearly labeled.
 
 ## Edge Cases & Judgment Calls
 
-**Incomplete input — brand info package missing optional fields:**
-Fill every field you have data for. Leave missing fields empty rather than fabricating data. Note which fields were skipped in `fields_skipped`. Never invent a phone number, address, or hours of operation.
+**Stealth still detected (IP-level block):**
+Some platforms block Railway/cloud datacenter IPs entirely regardless of browser stealth. This shows as an immediate redirect to a "suspicious activity" or "access denied" page before any form interaction. Return `other_blocker` with notes that it appears to be an IP-level block rather than fingerprint detection.
 
-**Ambiguous classification — platform has multiple registration paths:**
-Prefer the "Business" or "Company" registration path over "Individual" or "Personal". If the platform offers "Claim Your Listing" alongside "Create Account", try "Create Account" first — claiming often requires verification of an existing listing.
+**CapSolver returns wrong token / CAPTCHA not submitted correctly:**
+Some platforms use custom CAPTCHA submission (non-standard hidden input names). If the CAPTCHA solve succeeds but form still fails, add platform-specific token injection to the script before retrying.
 
-**Oversized output — platform has dozens of profile fields:**
-Fill all text-based fields that accept brand-relevant information. Skip fields that require external data not in the brand info package (e.g., license numbers, tax IDs, employee count). Report skipped fields in the output.
+**Multi-step registration wizard:**
+Complete each step sequentially in the script, calling `solve_captcha_if_present` at each step transition. If a step blocks entirely (mandatory phone verification mid-wizard), return `verification_needed`.
 
-**Failed tool call — browser crashes or page fails to load:**
-Retry navigation once. If the page still fails, return status `other_blocker` with the error. Do not retry more than once — the platform may be down or blocking headless browsers entirely.
+**Incomplete brand info — missing optional fields:**
+Fill every field you have data for. Leave missing fields empty. Note skipped fields in `fields_skipped`. Never invent a phone number, address, or hours.
 
-**Platform requires a work email domain (not Gmail/Outlook):**
-Return status `verification_needed` with notes specifying that the platform requires a business domain email. Do not attempt to use a personal email if the form explicitly rejects it.
+**Ambiguous registration paths:**
+Prefer "Business" or "Company" path over "Individual". Try "Create Account" before "Claim Your Listing".
+
+**Platform requires a work email domain:**
+Return `verification_needed` with notes specifying the business domain email requirement.
 
 **Dropdown category has no exact match:**
-Select the closest parent category available. If "Digital Marketing Agency" is not listed but "Marketing" or "Advertising" is, use the broader category. Note the substitution in `notes`.
+Select the closest parent category. Note the substitution in `notes`.
 
-**Registration form is a multi-step wizard:**
-Complete each step sequentially. If a step requires information not available in the brand info package, fill what you can and proceed. If a step blocks entirely (e.g., mandatory phone verification mid-wizard), report the step number and blocker.
-
-**Platform detects headless browser and blocks access:**
-Return status `other_blocker` with a **manual assist package** in the notes. This must include:
-1. The direct signup/registration URL the member should visit
-2. All pre-filled field values formatted for easy copy-paste (business name, description, website, category, email, password)
-The member should be able to open the link and complete registration in under a minute using the notes. Do not attempt to bypass bot detection mechanisms — this is outside the skill's scope.
+**Script exec timeout:**
+Default exec timeout is 5 minutes. If the platform is slow (lots of page loads), structure the script to complete each phase quickly. If it times out, return `other_blocker` with the last known state.
 
 ## What This Skill Does NOT Do
 
-- Does not solve CAPTCHAs — reports them as blockers for manual resolution
-- Does not complete phone verification, SMS confirmation, or 2FA flows
-- Does not handle email verification clicks — reports the requirement and exits
-- Does not bypass bot detection or anti-automation measures
-- Does not create profiles that require payment — reports paywalls as blockers
-- Does not reuse descriptions across platforms — each platform gets unique text from `brand_info.platform_description`
-- Does not handle complex image operations (cropping, resizing, drag-and-drop uploads)
-- Does not manage ongoing profile maintenance (updates, responses to reviews, posting)
+- Does not handle email verification clicks (reports requirement and exits)
+- Does not complete phone verification, SMS, or 2FA flows
+- Does not create profiles that require payment
+- Does not handle complex image operations (cropping, drag-and-drop only uploads)
+- Does not manage ongoing profile maintenance
 - Does not create multiple profiles on the same platform in one invocation
+- Does not reuse descriptions across platforms
 
 ## Examples
 
-### Example 1: Successful profile creation on a business directory (happy path)
+### Example 1: Successful profile creation with CAPTCHA solved automatically
 
 **User:** Create a profile for "Acme Plumbing" on yellowpages.com
 
-**Brand info provided:**
-```json
-{
-  "name": "Acme Plumbing",
-  "website_url": "https://acmeplumbing.com",
-  "category": "Plumber",
-  "platform_description": "Acme Plumbing provides residential and commercial plumbing services in Austin, TX. Licensed and insured with over 15 years of experience in pipe repair, water heater installation, and emergency plumbing.",
-  "email": "listings@acmeplumbing.com",
-  "password": "Xr9#mK2pL!4w"
-}
-```
-
 **Agent action:**
-1. Navigates to yellowpages.com, finds "Add Your Business" link
-2. Fills email and password, submits registration — account created
-3. Navigates to profile edit, fills: business name, description (unique platform text), website, category ("Plumber" matched from dropdown), phone, address
-4. Uploads logo via standard file input — success
-5. Saves profile, navigates to public listing
+1. `web_fetch` on yellowpages.com/advertise — identifies form selectors
+2. Writes stealth script with email/password fields + `solve_captcha_if_present` after submit
+3. Runs script via exec — CapSolver resolves reCAPTCHA v2 on form submit automatically
+4. Navigates to profile edit, fills all fields
+5. Uploads logo via `page.set_input_files`
 
 **Agent output:**
 ```json
@@ -239,31 +328,13 @@ The member should be able to open the link and complete registration in under a 
   "status": "created",
   "fields_filled": ["business_name", "description", "website", "category", "phone", "address", "logo"],
   "fields_skipped": ["hours", "payment_methods"],
-  "notes": "Profile created successfully. Hours and payment methods were available fields but not provided in brand info. Category 'Plumber' matched exactly in dropdown."
+  "notes": "reCAPTCHA v2 on registration form solved automatically via CapSolver. Profile created successfully."
 }
 ```
 
-### Example 2: Platform requires email verification (edge case — verification blocker)
+### Example 2: Email verification required
 
 **User:** Create a profile for "Bloom Digital" on clutch.co
-
-**Brand info provided:**
-```json
-{
-  "name": "Bloom Digital",
-  "website_url": "https://bloomdigital.io",
-  "category": "Digital Marketing Agency",
-  "platform_description": "Bloom Digital is a performance marketing agency specializing in paid search and programmatic advertising for B2B SaaS companies.",
-  "email": "profiles@bloomdigital.io",
-  "password": "Tn7$bQ3rJ!9x"
-}
-```
-
-**Agent action:**
-1. Navigates to clutch.co, finds "Get Listed" registration form
-2. Fills email, password, company name — submits form
-3. Platform displays "Check your email to verify your account before continuing"
-4. No profile editing is accessible without verification
 
 **Agent output:**
 ```json
@@ -277,31 +348,30 @@ The member should be able to open the link and complete registration in under a 
   "status": "verification_needed",
   "fields_filled": ["business_name", "email"],
   "fields_skipped": ["description", "website", "category", "logo"],
-  "notes": "Account registration submitted. Platform requires email verification at profiles@bloomdigital.io before profile editing is accessible. No profile fields could be filled beyond the registration form. Manual step: click verification link in email, then re-run or complete profile manually."
+  "notes": "Account registered. Platform requires email verification at profiles@bloomdigital.io before profile editing is accessible.\n\n**Manual step:** Click verification link in email, then log in and complete the profile."
 }
 ```
 
-### Example 3: CAPTCHA blocks registration (edge case — unautomatable wall)
+### Example 3: IP-level block (datacenter IP)
 
-**User:** Create a profile for "Summit Legal" on avvo.com
+**User:** Create a profile for "Summit Legal" on linkedin.com
 
 **Agent action:**
-1. Navigates to avvo.com, finds attorney registration form
-2. Fills email and password fields
-3. reCAPTCHA v2 challenge appears on form submission
+1. Writes stealth script, navigates to linkedin.com/signup
+2. Page immediately shows "Unusual activity detected" before any form interaction
 
 **Agent output:**
 ```json
 {
-  "platform": "avvo.com",
+  "platform": "linkedin.com",
   "profile_url": null,
   "credentials": {
     "email": "listings@summitlegal.com",
     "password": "Kp5#wN8mR!2v"
   },
-  "status": "captcha_required",
-  "fields_filled": ["email"],
+  "status": "other_blocker",
+  "fields_filled": [],
   "fields_skipped": ["business_name", "description", "website", "category", "logo"],
-  "notes": "Registration form presents a reCAPTCHA v2 challenge on submission. Account was not created.\n\n**Manual signup — copy-paste ready:**\nSignup URL: https://www.avvo.com/registration\nBusiness name: Summit Legal\nDescription: Summit Legal is a full-service law firm in Denver, CO offering business litigation, employment law, and contract negotiation for small and mid-size companies.\nWebsite: https://summitlegal.com\nCategory: Law Firm\nEmail: listings@summitlegal.com\nPassword: Kp5#wN8mR!2v"
+  "notes": "LinkedIn is blocking access at the IP level (datacenter IP detection) before any form interaction. Stealth browser fingerprint is not the issue — this requires a residential IP.\n\n**Manual signup — copy-paste ready:**\nSignup URL: https://www.linkedin.com/signup\nBusiness name: Summit Legal\nDescription: Summit Legal is a full-service law firm in Denver, CO offering business litigation, employment law, and contract negotiation.\nWebsite: https://summitlegal.com\nEmail: listings@summitlegal.com\nPassword: Kp5#wN8mR!2v"
 }
 ```
