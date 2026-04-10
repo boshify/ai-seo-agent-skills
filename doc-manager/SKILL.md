@@ -39,7 +39,7 @@ outputs:
     label: "doc-url"
     description: "Google Docs URL of the created or modified document"
 
-tools_used: [gws-cli, curl]
+tools_used: [gws-cli]
 
 chains_from: []
 chains_to:
@@ -62,7 +62,7 @@ Creates and manages Google Docs as deliverables and working documents. The prima
 
 ## Context the Agent Needs
 
-All doc operations use the Google Docs API v1 and Drive API v3 via `curl`. Authentication uses the same `gws` service account as all other Google Workspace operations — get a token with `gws auth print-access-token`, then pass it as a Bearer token in every API call.
+All doc operations use the native `gws` CLI — no manual token juggling, no curl. The service account credentials file is mounted at `GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE` and `gws` reads it automatically on every call. Do **not** run `gws auth login`, `gws auth setup`, or try to export a token — those are interactive commands that don't apply to the container. Just call `gws <service> <resource> <method>` directly.
 
 **Doc IDs** are the alphanumeric string from the Google Docs URL:
 `https://docs.google.com/document/d/{DOC_ID}/edit`
@@ -95,25 +95,17 @@ If this returns a user object, proceed. If it errors, stop — report auth failu
 
 **Process:**
 ```bash
-TOKEN=$(gws auth print-access-token)
-
 # Create the document
-DOC=$(curl -s -X POST "https://docs.googleapis.com/v1/documents" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"title": "TITLE"}')
-
-DOC_ID=$(echo $DOC | jq -r '.documentId')
+DOC=$(gws docs documents create --json '{"title": "TITLE"}')
+DOC_ID=$(echo "$DOC" | jq -r '.documentId')
 echo "Created: https://docs.google.com/document/d/$DOC_ID/edit"
 ```
 
 If a `folder-id` is provided, move the doc into that folder after creation:
 ```bash
-# Move into folder (Drive API)
-curl -s -X PATCH "https://www.googleapis.com/drive/v3/files/$DOC_ID?addParents=FOLDER_ID&removeParents=root&supportsAllDrives=true" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{}'
+gws drive files update \
+  --params "{\"fileId\":\"$DOC_ID\",\"addParents\":\"FOLDER_ID\",\"removeParents\":\"root\",\"supportsAllDrives\":true}" \
+  --json '{}'
 ```
 
 **Output:** Doc ID and URL.
@@ -126,22 +118,17 @@ This is the standard pattern for producing branded reports. Clone the template, 
 
 **Process:**
 ```bash
-TOKEN=$(gws auth print-access-token)
-
 # 1. Clone the template
-CLONE=$(curl -s -X POST "https://www.googleapis.com/drive/v3/files/TEMPLATE_DOC_ID/copy?supportsAllDrives=true" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "TITLE", "parents": ["FOLDER_ID"]}')
+CLONE=$(gws drive files copy \
+  --params '{"fileId":"TEMPLATE_DOC_ID","supportsAllDrives":true}' \
+  --json '{"name":"TITLE","parents":["FOLDER_ID"]}')
 
-DOC_ID=$(echo $CLONE | jq -r '.id')
+DOC_ID=$(echo "$CLONE" | jq -r '.id')
 
 # 2. Replace all placeholders in one batchUpdate call
-# Build the requests array — one replaceAllText per placeholder
-curl -s -X POST "https://docs.googleapis.com/v1/documents/$DOC_ID:batchUpdate" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
+gws docs documents batchUpdate \
+  --params "{\"documentId\":\"$DOC_ID\"}" \
+  --json '{
     "requests": [
       {
         "replaceAllText": {
@@ -165,17 +152,16 @@ PLACEHOLDERS='{
   "{market_definition}": "Residential plumbing services in Auckland..."
 }'
 
-REQUESTS=$(echo $PLACEHOLDERS | jq '[to_entries[] | {
+REQUESTS=$(echo "$PLACEHOLDERS" | jq '[to_entries[] | {
   "replaceAllText": {
     "containsText": {"text": .key, "matchCase": false},
     "replaceText": .value
   }
 }]')
 
-curl -s -X POST "https://docs.googleapis.com/v1/documents/$DOC_ID:batchUpdate" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{\"requests\": $REQUESTS}"
+gws docs documents batchUpdate \
+  --params "{\"documentId\":\"$DOC_ID\"}" \
+  --json "{\"requests\": $REQUESTS}"
 ```
 
 **Output:** Cloned doc ID and URL, confirmation of placeholder count replaced.
@@ -187,22 +173,19 @@ curl -s -X POST "https://docs.googleapis.com/v1/documents/$DOC_ID:batchUpdate" \
 Same as the placeholder replacement step above, but on an existing doc (no cloning):
 
 ```bash
-TOKEN=$(gws auth print-access-token)
-
-REQUESTS=$(echo $PLACEHOLDERS | jq '[to_entries[] | {
+REQUESTS=$(echo "$PLACEHOLDERS" | jq '[to_entries[] | {
   "replaceAllText": {
     "containsText": {"text": .key, "matchCase": false},
     "replaceText": .value
   }
 }]')
 
-RESULT=$(curl -s -X POST "https://docs.googleapis.com/v1/documents/DOC_ID:batchUpdate" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{\"requests\": $REQUESTS}")
+RESULT=$(gws docs documents batchUpdate \
+  --params '{"documentId":"DOC_ID"}' \
+  --json "{\"requests\": $REQUESTS}")
 
 # Count how many replacements were made
-echo $RESULT | jq '[.replies[].replaceAllText.occurrencesChanged // 0] | add'
+echo "$RESULT" | jq '[.replies[].replaceAllText.occurrencesChanged // 0] | add'
 ```
 
 Check the `occurrencesChanged` field per reply — if zero for a placeholder that should exist, the placeholder text didn't match (check spelling, case, curly brace format).
@@ -213,19 +196,18 @@ Check the `occurrencesChanged` field per reply — if zero for a placeholder tha
 
 #### `read` — Get the text content of a document
 
-Export as plain text via the Drive API (simpler than parsing the Docs JSON structure):
+Export as plain text via Drive (simpler than parsing the Docs JSON structure):
 
 ```bash
-TOKEN=$(gws auth print-access-token)
-
-curl -s "https://www.googleapis.com/drive/v3/files/DOC_ID/export?mimeType=text/plain&supportsAllDrives=true" \
-  -H "Authorization: Bearer $TOKEN"
+gws drive files export \
+  --params '{"fileId":"DOC_ID","mimeType":"text/plain","supportsAllDrives":true}'
 ```
+
+(The exported bytes stream to stdout. Add `--output doc.txt` to save to a file instead.)
 
 To get the raw Docs JSON (structure, formatting, table data):
 ```bash
-curl -s "https://docs.googleapis.com/v1/documents/DOC_ID" \
-  -H "Authorization: Bearer $TOKEN" | jq '.body.content'
+gws docs documents get --params '{"documentId":"DOC_ID"}' | jq '.body.content'
 ```
 
 **Output:** Plain text content of the document.
@@ -237,18 +219,14 @@ curl -s "https://docs.googleapis.com/v1/documents/DOC_ID" \
 The Docs API requires knowing the end index to insert at. Read the doc first to find it:
 
 ```bash
-TOKEN=$(gws auth print-access-token)
-
 # 1. Get the current end index
-END_INDEX=$(curl -s "https://docs.googleapis.com/v1/documents/DOC_ID" \
-  -H "Authorization: Bearer $TOKEN" \
+END_INDEX=$(gws docs documents get --params '{"documentId":"DOC_ID"}' \
   | jq '.body.content[-1].endIndex - 1')
 
 # 2. Insert text at that index
-curl -s -X POST "https://docs.googleapis.com/v1/documents/DOC_ID:batchUpdate" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{
+gws docs documents batchUpdate \
+  --params '{"documentId":"DOC_ID"}' \
+  --json "{
     \"requests\": [{
       \"insertText\": {
         \"location\": {\"index\": $END_INDEX},
@@ -256,6 +234,11 @@ curl -s -X POST "https://docs.googleapis.com/v1/documents/DOC_ID:batchUpdate" \
       }
     }]
   }"
+```
+
+For simple "just append text to the end" cases, there's also a helper:
+```bash
+gws docs +write --document DOC_ID --text "YOUR CONTENT HERE"
 ```
 
 **Note:** For large content blocks with formatting, prefer `clone-template` with a pre-structured template over appending raw text. The Docs API insert operations don't apply formatting — appended text inherits the style at the insertion point.
@@ -339,14 +322,11 @@ Accept full Google Docs URLs and extract the ID from the path segment after `/d/
 **Context:** landscape-report-generator skill needs to produce a branded report doc.
 
 ```bash
-TOKEN=$(gws auth print-access-token)
-
 # Clone template
-CLONE=$(curl -s -X POST "https://www.googleapis.com/drive/v3/files/TEMPLATE_ID/copy?supportsAllDrives=true" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Acme Plumbing — Target Market Landscape Report", "parents": ["MEMBER_FOLDER_ID"]}')
-DOC_ID=$(echo $CLONE | jq -r '.id')
+CLONE=$(gws drive files copy \
+  --params '{"fileId":"TEMPLATE_ID","supportsAllDrives":true}' \
+  --json '{"name":"Acme Plumbing — Target Market Landscape Report","parents":["MEMBER_FOLDER_ID"]}')
+DOC_ID=$(echo "$CLONE" | jq -r '.id')
 
 # Fill all placeholders in one call
 PLACEHOLDERS=$(jq -n '{
@@ -363,15 +343,14 @@ PLACEHOLDERS=$(jq -n '{
   "{gap_analysis}": "No before/after photos specific to hot water installations."
 }')
 
-REQUESTS=$(echo $PLACEHOLDERS | jq '[to_entries[] | {"replaceAllText": {"containsText": {"text": .key, "matchCase": false}, "replaceText": .value}}]')
+REQUESTS=$(echo "$PLACEHOLDERS" | jq '[to_entries[] | {"replaceAllText": {"containsText": {"text": .key, "matchCase": false}, "replaceText": .value}}]')
 
-RESULT=$(curl -s -X POST "https://docs.googleapis.com/v1/documents/$DOC_ID:batchUpdate" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{\"requests\": $REQUESTS}")
+RESULT=$(gws docs documents batchUpdate \
+  --params "{\"documentId\":\"$DOC_ID\"}" \
+  --json "{\"requests\": $REQUESTS}")
 
 echo "Report ready: https://docs.google.com/document/d/$DOC_ID/edit"
-echo $RESULT | jq '[.replies[].replaceAllText.occurrencesChanged // 0] | add | "Replacements made: \(.)"'
+echo "$RESULT" | jq '[.replies[].replaceAllText.occurrencesChanged // 0] | add | "Replacements made: \(.)"'
 ```
 
 **Output:**
@@ -390,10 +369,8 @@ Unfilled placeholders: none
 **Context:** Agent needs to confirm no `{placeholder}` text remains in a delivered report.
 
 ```bash
-TOKEN=$(gws auth print-access-token)
-
-CONTENT=$(curl -s "https://www.googleapis.com/drive/v3/files/DOC_ID/export?mimeType=text/plain&supportsAllDrives=true" \
-  -H "Authorization: Bearer $TOKEN")
+CONTENT=$(gws drive files export \
+  --params '{"fileId":"DOC_ID","mimeType":"text/plain","supportsAllDrives":true}')
 
 # Check for any remaining unfilled placeholders
 echo "$CONTENT" | grep -o '{[^}]*}' | sort -u

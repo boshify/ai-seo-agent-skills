@@ -49,25 +49,25 @@ gws drive files list --params "{
 ```bash
 # Get the file ID from the list above
 gws drive files export \
-  --params '{"fileId": "YOUR_DOC_ID"}' \
-  --download text/html > article.html
+  --params '{"fileId":"YOUR_DOC_ID","mimeType":"text/html"}' \
+  --output article.html
 ```
 
 ### Download a Google Doc as plain text
 
 ```bash
 gws drive files export \
-  --params '{"fileId": "YOUR_DOC_ID"}' \
-  --download text/plain > article.txt
+  --params '{"fileId":"YOUR_DOC_ID","mimeType":"text/plain"}' \
+  --output article.txt
 ```
 
 ### Download an image
 
 ```bash
-# Images are regular files, not Google Docs — use get, not export
+# Images are regular files, not Google Docs — use get with alt=media, not export
 gws drive files get \
-  --params '{"fileId": "YOUR_IMAGE_ID"}' \
-  --download > image.jpg
+  --params '{"fileId":"YOUR_IMAGE_ID","alt":"media"}' \
+  --output image.jpg
 ```
 
 ### Read a spreadsheet (internal linking recommendations)
@@ -75,7 +75,7 @@ gws drive files get \
 ```bash
 # Get spreadsheet ID from the file list (mimeType: application/vnd.google-apps.spreadsheet)
 gws sheets +read \
-  --spreadsheet-id "YOUR_SHEET_ID" \
+  --spreadsheet "YOUR_SHEET_ID" \
   --range "Sheet1!A1:Z"
 ```
 
@@ -83,7 +83,7 @@ Output is JSON with rows and columns. Parse with `jq`:
 
 ```bash
 gws sheets +read \
-  --spreadsheet-id "YOUR_SHEET_ID" \
+  --spreadsheet "YOUR_SHEET_ID" \
   --range "Sheet1!A1:D100" | jq '.values[]'
 ```
 
@@ -91,8 +91,8 @@ gws sheets +read \
 
 ```bash
 gws drive files export \
-  --params '{"fileId": "YOUR_SHEET_ID"}' \
-  --download text/csv > data.csv
+  --params '{"fileId":"YOUR_SHEET_ID","mimeType":"text/csv"}' \
+  --output data.csv
 ```
 
 ### Upload a file to the project folder
@@ -155,10 +155,10 @@ gws drive files list --params "{
 }"
 
 # Download as HTML
-gws drive files export --params '{"fileId": "doc_id"}' --download text/html > article.html
+gws drive files export --params '{"fileId":"doc_id","mimeType":"text/html"}' --output article.html
 
 # Download images
-gws drive files get --params '{"fileId": "img_id"}' --download > featured.jpg
+gws drive files get --params '{"fileId":"img_id","alt":"media"}' --output featured.jpg
 
 # 3. Publish to CMS (see ../cms-skills/)
 # WordPress example:
@@ -178,7 +178,7 @@ gws drive files list --params "{
 }"
 
 # 2. Read linking recommendations
-gws sheets +read --spreadsheet-id "sheet_id" --range "Sheet1!A1:D100"
+gws sheets +read --spreadsheet "sheet_id" --range "Sheet1!A1:D100"
 
 # Output typically contains: Source URL, Target URL, Anchor Text, Context
 # 3. Parse and apply links to your content before publishing

@@ -348,13 +348,13 @@ Project Drive Folder/
    gws drive files list --params '{"q": "\"FOLDER_ID\" in parents"}'
 
    # Download edited article as HTML
-   gws drive files export --params '{"fileId": "DOC_ID"}' --download text/html > article.html
+   gws drive files export --params '{"fileId":"DOC_ID","mimeType":"text/html"}' --output article.html
 
    # Download a generated image
-   gws drive files get --params '{"fileId": "IMG_ID"}' --download > featured.jpg
+   gws drive files get --params '{"fileId":"IMG_ID","alt":"media"}' --output featured.jpg
 
    # Read internal linking spreadsheet
-   gws sheets +read --spreadsheet-id "SHEET_ID" --range "Sheet1!A1:Z"
+   gws sheets +read --spreadsheet "SHEET_ID" --range "Sheet1!A1:Z"
    ```
 
 See [google-workspace.md](./google-workspace.md) for complete recipes.

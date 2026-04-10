@@ -169,7 +169,7 @@ If an internal links spreadsheet is provided (from Google Sheets via `gws`), inj
 
 ```bash
 # Read links from a Google Sheet
-gws sheets read SPREADSHEET_ID "Sheet1!A:C" --format=json
+gws sheets +read --spreadsheet SPREADSHEET_ID --range "Sheet1!A:C"
 
 # Parse the JSON to get anchor text + target URL pairs
 # Inject <a href="target-url">anchor text</a> into matching phrases in the HTML
@@ -180,8 +180,10 @@ If content comes from AI SEO Engine via Google Drive:
 # Get the Drive folder for the project
 aiseo drive folder --project-id PROJECT_ID
 
-# Export the Google Doc as HTML
-gws docs export DOC_ID --format=html --output=article.html
+# Export the Google Doc as HTML (via Drive export)
+gws drive files export \
+  --params '{"fileId":"DOC_ID","mimeType":"text/html","supportsAllDrives":true}' \
+  --output article.html
 ```
 
 **Output:** Final HTML content ready for publishing, with internal links applied.
@@ -461,12 +463,14 @@ curl -s -X PUT https://myblog.com/wp-json/wp/v2/posts/1234 \
 
 ```bash
 # 1. Read internal links from Google Sheet
-gws sheets read 1aBcDeFgHiJkLmNoPqRsT "Links!A:C" --format=json
-# => [{"anchor": "SEO audit", "url": "/seo-audit-guide/", "target_post": "all"}, ...]
+gws sheets +read --spreadsheet 1aBcDeFgHiJkLmNoPqRsT --range "Links!A:C"
+# => {"values": [["SEO audit", "/seo-audit-guide/", "all"], ...]}
 
 # 2. Download content from Drive
 aiseo drive folder --project-id proj_abc123
-gws docs export DOC_ID --format=html --output=article.html
+gws drive files export \
+  --params '{"fileId":"DOC_ID","mimeType":"text/html","supportsAllDrives":true}' \
+  --output article.html
 
 # 3. Inject internal links into article.html (find anchor phrases, wrap in <a> tags)
 # Agent processes the JSON and modifies article.html accordingly

@@ -116,10 +116,10 @@ gws drive files list --params "{
 }"
 
 # Download article as HTML
-gws drive files export --params '{"fileId": "doc_123"}' --download text/html > article.html
+gws drive files export --params '{"fileId":"doc_123","mimeType":"text/html"}' --output article.html
 
 # Download featured image
-gws drive files get --params '{"fileId": "img_456"}' --download > featured.jpg
+gws drive files get --params '{"fileId":"img_456","alt":"media"}' --output featured.jpg
 
 # Publish to WordPress (see ../cms-skills/wordpress.md for full details)
 MEDIA_ID=$(curl -s -X POST https://yoursite.com/wp-json/wp/v2/media \
@@ -191,7 +191,7 @@ for IMG in $(echo $IMAGES | jq -r '.files[] | @base64'); do
   ID=$(echo $IMG | base64 -d | jq -r '.id')
   NAME=$(echo $IMG | base64 -d | jq -r '.name')
 
-  gws drive files get --params "{\"fileId\": \"${ID}\"}" --download > "$NAME"
+  gws drive files get --params "{\"fileId\":\"${ID}\",\"alt\":\"media\"}" --output "$NAME"
   echo "Downloaded: $NAME"
 done
 
@@ -225,10 +225,10 @@ gws drive files list --params "{
 
 # Read the linking spreadsheet
 # Columns typically: Source URL, Target URL, Anchor Text, Context
-gws sheets +read --spreadsheet-id "sheet_id" --range "Sheet1!A1:D100"
+gws sheets +read --spreadsheet "sheet_id" --range "Sheet1!A1:D100"
 
 # Export as CSV for easier parsing
-gws drive files export --params '{"fileId": "sheet_id"}' --download text/csv > links.csv
+gws drive files export --params '{"fileId":"sheet_id","mimeType":"text/csv"}' --output links.csv
 
 # Parse and apply (agent logic):
 # 1. Read the CSV
