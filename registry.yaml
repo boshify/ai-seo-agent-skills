@@ -277,6 +277,23 @@ skills:
     tools_used: [web_search, web_fetch]
     tags: [seo, serp-validation, content-architecture, stories-to-queries]
 
+  - name: ai-visibility-topic-validator
+    path: ai-visibility-topic-validator/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: validating whether a content topic is worth creating, checking SERP fit,
+      brand lane alignment, AI replaceability, or uniqueness. Always trigger when someone says
+      "should I make this page", "validate this topic", "is this worth writing about", "content
+      validation", "will this rank", "lane check", "SERP check this topic", "is this in my lane",
+      or provides a topic + site URL and asks whether to create content about it. Also trigger
+      when someone provides a list of topics and asks which ones are worth pursuing.
+    inputs: [site-url, topic-or-query]
+    outputs: [content-validation-report]
+    chains_from: [volume-checker, serp-validator]
+    chains_to: [ai-seo-engine]
+    tools_used: [web_search, page-scraper]
+    tags: [seo, content-validation, ai-visibility, serp-analysis, topic-validation, lane-check]
+
   - name: landscape-report-generator
     path: landscape-report-generator/SKILL.md
     version: "1.0"
