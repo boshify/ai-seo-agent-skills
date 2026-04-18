@@ -67,6 +67,26 @@ skills:
     tools_used: [curl, jq]
     tags: [cms, shopify, publishing, seo, ecommerce]
 
+  - name: video-screenshot-extractor
+    path: cms-skills/video-screenshot-extractor/SKILL.md
+    version: "1.1"
+    trigger: >
+      USE WHEN: user provides BOTH a video source (YouTube, Vimeo, Loom, direct MP4 — any video
+      URL or file) AND a blog post (markdown, HTML, or URL), and wants frames from the video
+      placed into the article. Always trigger on phrases like "screenshots from the video",
+      "frames from the recording", "proof images from the video", "stills from the video",
+      "add images from the video/loom/youtube", "replace the embedded video with screenshots".
+      DO NOT USE FOR: screenshots of a live webpage/dashboard with no video involved,
+      AI-generated illustration images, video trimming or editing, audio extraction, or plain
+      transcription. Produces full-quality PNGs with SEO EXIF, section-matched placements, and
+      timestamp-deeplinked anchor text back to the exact second of the video.
+    inputs: [video-url, blog-post]
+    outputs: [screenshots, modified-blog-post, manifest]
+    chains_from: [transcript-to-blog-post]
+    chains_to: [cms-wordpress, cms-webflow, cms-shopify]
+    tools_used: [yt-dlp, ffmpeg, exiftool, piexif, Pillow, python3]
+    tags: [seo, video, screenshots, content-pipeline, exif, youtube, vimeo, cms]
+
   - name: page-scraper
     path: page-scraper/SKILL.md
     version: "1.0"
