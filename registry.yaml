@@ -360,3 +360,19 @@ skills:
     chains_to: [satellite-content-produce]
     tools_used: [brave_search, web_search, web_fetch]
     tags: [serp, classification, asn, satellite-network]
+
+  - name: sitemap-diff
+    path: sitemap-diff/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: discovering which hub pages on a site don't yet have satellites deployed —
+      especially for ASN cron eligibility checks, new-page discovery, or sitemap-driven
+      deployment. Pulls the site's sitemap, diffs against the ASN Tracker sheet, returns
+      candidate hub URLs ordered oldest-first by last-modified. Always trigger when sitemap
+      detection or hub-page eligibility checks are needed.
+    inputs: [site-root, tracker-sheet-id, tracker-tab-name, hub-url-column]
+    outputs: [eligible-hub-urls]
+    chains_from: []
+    chains_to: [satellite-content-produce]
+    tools_used: [page_scraper, web_fetch]
+    tags: [sitemap, asn, discovery, cron]
