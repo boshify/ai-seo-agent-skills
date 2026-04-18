@@ -328,3 +328,35 @@ skills:
     chains_to: []
     tools_used: [gws-cli]
     tags: [report-generation, google-docs, target-market-landscape, deliverable]
+
+  - name: satellite-content-produce
+    path: satellite-content-produce/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: producing satellite content for an Authority Satellite Network deployment.
+      Writes ready-to-paste content targeted at a specific sub-query, formatted for a specific
+      format class (Content / UGC / Video-long / Video-short / Social / Technical / Document),
+      with hub link and sibling bracket-token placeholders baked in. Always trigger when the
+      ASN deployment process needs satellite content for an off-site platform.
+    inputs: [sub-query, format-class, target-platform, hub-url, hub-summary, sibling-satellites, brand-context]
+    outputs: [satellite-content-package]
+    chains_from: [serp-fetch-and-classify]
+    chains_to: [satellite-publish]
+    tools_used: []
+    tags: [content-production, asn, satellite-network]
+
+  - name: serp-fetch-and-classify
+    path: serp-fetch-and-classify/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: analyzing SERP composition for a specific query — especially for ASN deployment,
+      competitive analysis, or sub-query viability checks. Fetches page 1 of Google and
+      classifies each result as owned-website or non-owned-platform, identifying the format
+      class when non-owned. Always trigger when a process needs to know whether off-site content
+      can rank for a query.
+    inputs: [sub-query, brand-domain]
+    outputs: [serp-classification-report]
+    chains_from: []
+    chains_to: [satellite-content-produce]
+    tools_used: [brave_search, web_search, web_fetch]
+    tags: [serp, classification, asn, satellite-network]
