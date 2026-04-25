@@ -314,6 +314,26 @@ skills:
     tools_used: [web_search, page-scraper]
     tags: [seo, content-validation, ai-visibility, serp-analysis, topic-validation, lane-check]
 
+  - name: champion-page-consolidator
+    path: champion-page-consolidator/SKILL.md
+    version: "1.0"
+    trigger: >
+      USE WHEN: identifying cannibalization, auditing money pages, finding pages that
+      compete with each other, building a consolidation playbook, or determining which
+      pages to redirect. Always trigger when someone says "find cannibalization", "audit
+      my money pages", "champion page audit", "consolidate my pages", "kill cannibalizing
+      pages", "which pages are competing", "consolidation plan", "fix cannibalization",
+      "PageRank consolidation", "find pages stealing my rankings", or asks "why isn't my
+      SEO working" alongside a site that publishes lots of long-tail variants. Walks the
+      user through a guided GSC export workflow and produces a money-page-anchored
+      consolidation playbook with SERP-verified evidence.
+    inputs: [site-url, gsc-exports, money-pages]
+    outputs: [consolidation-playbook]
+    chains_from: []
+    chains_to: []
+    tools_used: [web_fetch, web_search]
+    tags: [seo, ai-seo, cannibalization, pagerank, consolidation, champion-pages]
+
   - name: landscape-report-generator
     path: landscape-report-generator/SKILL.md
     version: "1.0"
