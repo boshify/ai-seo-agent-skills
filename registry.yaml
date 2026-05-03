@@ -1,10 +1,8 @@
 # registry.yaml — Skill Discovery Index
 #
-# Agents read this FIRST to find the right skill without scanning every directory.
-# Each entry contains enough information to make a selection decision without
-# fetching any SKILL.md files. One read, one decision, one fetch.
-#
-# Update whenever a skill is added, renamed, or removed.
+# After May 2026 trim: this file lists only the public skills hosted in this repo
+# (CMS publishing helpers + AI SEO Engine reference). The bulk of operator skills
+# moved to Omnipresence (membership-only). See README for context.
 #
 # Raw URL: https://raw.githubusercontent.com/boshify/ai-seo-agent-skills/main/registry.yaml
 
@@ -12,387 +10,134 @@ repo: ai-seo-agent-skills
 maintainer: Jonathan Boshoff
 url: https://github.com/boshify/ai-seo-agent-skills
 academy: https://www.skool.com/ai-seo
-
 skills:
   - name: ai-seo-engine
     path: ai-seo-engine-skills/SKILL.md
     version: "1.1"
-    trigger: >
-      USE WHEN: creating content, refreshing content, generating topical maps, bulk importing
-      keywords, managing SEO projects, or retrieving deliverables from Google Drive.
-      NOT NEEDED FOR: reading pages, analyzing competitors, or publishing to CMS (use other skills).
-    inputs: [aiseo-api-key, project-id]
-    outputs: [cli-output]
+    trigger: |
+      USE WHEN: creating content, refreshing content, generating topical maps, bulk importing keywords, managing SEO projects, or retrieving deliverables from Google Drive. NOT NEEDED FOR: reading pages, analyzing competitors, or publishing to CMS (use other skills).
+    inputs:
+      - aiseo-api-key
+      - project-id
+    outputs:
+      - cli-output
     chains_from: []
-    chains_to: [cms-wordpress, cms-webflow, cms-shopify]
-    tools_used: [aiseo-cli, mcp-server, gws-cli, curl, jq]
-    tags: [seo, content-generation, ai, cli, mcp, google-drive]
-
+    chains_to:
+      - cms-wordpress
+      - cms-webflow
+      - cms-shopify
+    tools_used:
+      - aiseo-cli
+      - mcp-server
+      - gws-cli
+      - curl
+      - jq
+    tags:
+      - seo
+      - content-generation
+      - ai
+      - cli
+      - mcp
+      - google-drive
   - name: cms-wordpress
     path: cms-skills/wordpress/SKILL.md
     version: "1.0"
-    trigger: >
-      USE WHEN: publishing or updating content on a WordPress site. Includes posts, pages,
-      media uploads, featured images, categories, tags, and SEO metadata (Yoast/RankMath).
-    inputs: [wordpress-url, wordpress-credentials, html-content]
-    outputs: [published-post-url]
-    chains_from: [ai-seo-engine]
+    trigger: |
+      USE WHEN: publishing or updating content on a WordPress site. Includes posts, pages, media uploads, featured images, categories, tags, and SEO metadata (Yoast/RankMath).
+    inputs:
+      - wordpress-url
+      - wordpress-credentials
+      - html-content
+    outputs:
+      - published-post-url
+    chains_from:
+      - ai-seo-engine
     chains_to: []
-    tools_used: [curl, wp-cli, jq]
-    tags: [cms, wordpress, publishing, seo]
-
+    tools_used:
+      - curl
+      - wp-cli
+      - jq
+    tags:
+      - cms
+      - wordpress
+      - publishing
+      - seo
   - name: cms-webflow
     path: cms-skills/webflow/SKILL.md
     version: "1.0"
-    trigger: >
-      USE WHEN: publishing or updating content on a Webflow site. Includes CMS collection items,
-      rich text content, SEO metadata, and publishing state management.
-    inputs: [webflow-api-token, collection-id, html-content]
-    outputs: [published-item-url]
-    chains_from: [ai-seo-engine]
+    trigger: |
+      USE WHEN: publishing or updating content on a Webflow site. Includes CMS collection items, rich text content, SEO metadata, and publishing state management.
+    inputs:
+      - webflow-api-token
+      - collection-id
+      - html-content
+    outputs:
+      - published-item-url
+    chains_from:
+      - ai-seo-engine
     chains_to: []
-    tools_used: [curl, jq]
-    tags: [cms, webflow, publishing, seo]
-
+    tools_used:
+      - curl
+      - jq
+    tags:
+      - cms
+      - webflow
+      - publishing
+      - seo
   - name: cms-shopify
     path: cms-skills/shopify/SKILL.md
     version: "1.0"
-    trigger: >
-      USE WHEN: publishing blog articles or pages to a Shopify store. Includes content creation,
-      featured images, SEO metafields (title_tag, description_tag), and scheduling.
-    inputs: [shopify-store-url, shopify-access-token, html-content]
-    outputs: [published-article-url]
-    chains_from: [ai-seo-engine]
+    trigger: |
+      USE WHEN: publishing blog articles or pages to a Shopify store. Includes content creation, featured images, SEO metafields (title_tag, description_tag), and scheduling.
+    inputs:
+      - shopify-store-url
+      - shopify-access-token
+      - html-content
+    outputs:
+      - published-article-url
+    chains_from:
+      - ai-seo-engine
     chains_to: []
-    tools_used: [curl, jq]
-    tags: [cms, shopify, publishing, seo, ecommerce]
-
+    tools_used:
+      - curl
+      - jq
+    tags:
+      - cms
+      - shopify
+      - publishing
+      - seo
+      - ecommerce
   - name: video-screenshot-extractor
     path: cms-skills/video-screenshot-extractor/SKILL.md
     version: "1.1"
-    trigger: >
-      USE WHEN: user provides BOTH a video source (YouTube, Vimeo, Loom, direct MP4 — any video
-      URL or file) AND a blog post (markdown, HTML, or URL), and wants frames from the video
-      placed into the article. Always trigger on phrases like "screenshots from the video",
-      "frames from the recording", "proof images from the video", "stills from the video",
-      "add images from the video/loom/youtube", "replace the embedded video with screenshots".
-      DO NOT USE FOR: screenshots of a live webpage/dashboard with no video involved,
-      AI-generated illustration images, video trimming or editing, audio extraction, or plain
-      transcription. Produces full-quality PNGs with SEO EXIF, section-matched placements, and
-      timestamp-deeplinked anchor text back to the exact second of the video.
-    inputs: [video-url, blog-post]
-    outputs: [screenshots, modified-blog-post, manifest]
-    chains_from: [transcript-to-blog-post]
-    chains_to: [cms-wordpress, cms-webflow, cms-shopify]
-    tools_used: [yt-dlp, ffmpeg, exiftool, piexif, Pillow, python3]
-    tags: [seo, video, screenshots, content-pipeline, exif, youtube, vimeo, cms]
-
-  - name: page-scraper
-    path: page-scraper/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: reading any web page for diagnosis, research, competitive analysis, or content
-      extraction. ALWAYS USE instead of built-in web fetch for page reading — this skill bypasses
-      bot protection, extracts structured data (tables, schema markup, SEO metadata), and falls
-      back to Jina Reader automatically. Also use for sitemap parsing.
-    inputs: [url]
-    outputs: [page-content, seo-metadata, sitemap-urls]
-    chains_from: [ai-seo-engine]
-    chains_to: [ai-seo-engine, cms-wordpress, cms-webflow, cms-shopify]
-    tools_used: [curl, jina-reader]
-    tags: [scraping, content-extraction, seo, research, sitemap]
-
-  - name: sheet-manager
-    path: sheet-manager/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: creating a tracking spreadsheet, adding or updating rows, checking for duplicates,
-      reading sheet data, or managing tabs within a Google Sheet workbook. Always trigger when a
-      process requires persistent tabular tracking via Google Sheets.
-    inputs: [operation]
-    outputs: [sheet-result, sheet-url]
-    chains_from: []
-    chains_to: [competitor-profile-researcher, profile-creator, brand-info-assembler, existing-profile-checker]
-    tools_used: [gws-cli, curl]
-    tags: [google-sheets, tracking, data-management, automation]
-
-  - name: competitor-profile-researcher
-    path: competitor-profile-researcher/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: discovering which platforms a competitor has profiles on, researching competitor
-      entity signals, or identifying directories and review sites in a niche. Always trigger when
-      given a competitor brand name + URL and asked to find their online profiles.
-    inputs: [competitor_name, competitor_url]
-    outputs: [discovered-profiles]
-    chains_from: [sheet-manager]
-    chains_to: [sheet-manager, existing-profile-checker]
-    tools_used: [brave-search, page-scraper]
-    tags: [competitor-research, profile-discovery, entity-signals, seo]
-
-  - name: profile-creator
-    path: profile-creator/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: creating a new business profile on a directory, citation site, social platform,
-      or review platform via headless browser. Produces a result with profile URL, credentials,
-      status, and notes describing any blockers encountered.
-    inputs: [platform_url, brand_info]
-    outputs: [profile-result]
-    chains_from: [existing-profile-checker, brand-info-assembler, sheet-manager]
-    chains_to: [sheet-manager]
-    tools_used: [browser, curl]
-    tags: [profile-creation, automation, entity-signals, headless-browser]
-
-  - name: brand-info-assembler
-    path: brand-info-assembler/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: assembling brand information and generating unique descriptions for profile
-      creation, directory listings, or any multi-platform presence building. Always trigger when
-      a brand needs unique copy across multiple platforms.
-    inputs: [brand-name, brand-url]
-    outputs: [brand-info-package, platform-description]
-    chains_from: [sheet-manager]
-    chains_to: [profile-creator, existing-profile-checker]
-    tools_used: [page-scraper]
-    tags: [brand-info, content-generation, entity-signals, profile-creation]
-
-  - name: existing-profile-checker
-    path: existing-profile-checker/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: checking if a brand already has a profile on a platform before creating one.
-      ALWAYS trigger before profile-creator to prevent duplicate profiles that fragment entity
-      signals. Also use when auditing a brand's multi-surface presence.
-    inputs: [brand-name, brand-url, platform-url]
-    outputs: [profile-check-verdict]
-    chains_from: [sheet-manager, competitor-profile-researcher]
-    chains_to: [profile-creator, sheet-manager]
-    tools_used: [brave-search, page-scraper]
-    tags: [profile-detection, duplicate-check, entity-signals, profile-creation]
-
-  - name: doc-manager
-    path: doc-manager/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: creating a new Google Doc, cloning a template and filling placeholders,
-      reading doc content, or appending content to an existing doc. Always trigger when
-      a process requires producing or editing a Google Doc deliverable — reports, briefs,
-      ICPs, or any structured document.
-    inputs: [operation, doc-id, doc-title, folder-id, placeholders, content]
-    outputs: [doc-result, doc-url]
-    chains_from: []
-    chains_to: []
-    tools_used: [gws-cli, curl]
-    tags: [google-docs, document-management, template-filling, deliverable]
-
-  - name: market-research
-    path: market-research/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: the target-market-landscape-analysis process reaches Step 2 (market research),
-      or when a member asks about their market size, TAM, industry landscape, or market trends.
-      Produces a structured market overview with TAM estimate, growth trajectory, and demand
-      signals. Always trigger when market sizing, TAM, industry analysis, or market research
-      intent is present.
-    inputs: [industry-description]
-    outputs: [market-overview]
-    chains_from: []
-    chains_to: [competitor-landscape-research]
-    tools_used: [web-search]
-    tags: [market-research, tam, industry-analysis, target-market-landscape]
-
-  - name: competitor-landscape-research
-    path: competitor-landscape-research/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: the target-market-landscape-analysis process reaches Step 3 (competitor research),
-      or when asked to research a specific competitor's SEO metrics, AI visibility, and positioning.
-      Designed to run as a sub-agent skill — one instance per competitor, parallelized. Always
-      trigger when competitor research, competitor analysis, or competitive intelligence is needed.
-    inputs: [competitor-domain, competitor-brand-name]
-    outputs: [competitor-profile]
-    chains_from: [market-research]
-    chains_to: [proof-catalog]
-    tools_used: [ahrefs-api, web-fetch]
-    tags: [competitor-research, ahrefs, ai-visibility, brand-radar, target-market-landscape]
-
-  - name: proof-catalog
-    path: proof-catalog/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: the target-market-landscape-analysis process reaches Step 7 (proof catalog),
-      or when asked to audit a member's proof assets, credibility signals, or trust indicators.
-      Produces a ranked proof inventory with gap analysis based on outcome-proximity. Always
-      trigger when proof, trust signals, testimonials, case studies, or credibility auditing
-      is requested.
-    inputs: [brand-url]
-    outputs: [proof-inventory]
-    chains_from: [competitor-landscape-research]
-    chains_to: [landscape-report-generator]
-    tools_used: [web-fetch, page-scraper]
-    tags: [proof-catalog, trust-signals, credibility, case-studies, target-market-landscape]
-
-  - name: entity-extractor
-    path: entity-extractor/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: extracting entity-attribute pairs from User Stories, or when asked to identify
-      what entity and attribute a User Story maps to. Always trigger when converting a User Story
-      into a searchable pair, or when someone says "extract the entity", "what's the entity-attribute
-      pair", "what would they search", or "derive the pair from this story". First step in the
-      stories-to-queries pipeline — runs before verbalization-generator.
-    inputs: [user-story, business-context]
-    outputs: [entity-attribute-pair]
-    chains_from: [user-stories]
-    chains_to: [verbalization-generator]
-    tools_used: [knowledge-graph-mcp]
-    tags: [seo, entity, query-derivation, stories-to-queries]
-
-  - name: verbalization-generator
-    path: verbalization-generator/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: generating all the ways someone might search for an entity-attribute pair.
-      Always trigger when verbalization expansion is needed, or when someone says "generate
-      verbalizations", "what else would they search", "expand this pair", "find all the ways
-      people search for this", or "get autosuggest for this". Runs after entity-extractor,
-      before volume-checker.
-    inputs: [entity-attribute-pair, business-context, member-suggestions]
-    outputs: [verbalization-set]
-    chains_from: [entity-extractor]
-    chains_to: [volume-checker]
-    tools_used: [web_search]
-    tags: [seo, query-derivation, verbalization, stories-to-queries]
-
-  - name: volume-checker
-    path: volume-checker/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: checking search volume and keyword difficulty for an entity-attribute pair and
-      its verbalizations. Always trigger when volume data is needed, or when someone says "check
-      volume", "what's the search volume", "pull keyword data", "check Ahrefs", or "validate
-      this keyword". Runs after verbalization-generator, before serp-validator.
-    inputs: [entity-attribute-pair, verbalizations, country, market-context]
-    outputs: [volume-report]
-    chains_from: [verbalization-generator]
-    chains_to: [serp-validator]
-    tools_used: [Ahrefs:keywords-explorer-overview]
-    tags: [seo, volume, keyword-research, stories-to-queries]
-
-  - name: serp-validator
-    path: serp-validator/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: validating whether verbalizations of an entity-attribute pair share SERP intent
-      (one page) or diverge (separate pages). Always trigger when SERP intent comparison is needed,
-      or when someone says "check the SERPs", "do these share intent", "should this be one page or
-      two", "validate against SERPs", or "check if these overlap". Final step in the
-      stories-to-queries pipeline — runs after volume-checker.
-    inputs: [entity-attribute-pair, verbalizations-to-compare, additional-attributes]
-    outputs: [serp-validation-report]
-    chains_from: [volume-checker]
-    chains_to: []
-    tools_used: [web_search, web_fetch]
-    tags: [seo, serp-validation, content-architecture, stories-to-queries]
-
-  - name: ai-visibility-topic-validator
-    path: ai-visibility-topic-validator/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: validating whether a content topic is worth creating, checking SERP fit,
-      brand lane alignment, AI replaceability, or uniqueness. Always trigger when someone says
-      "should I make this page", "validate this topic", "is this worth writing about", "content
-      validation", "will this rank", "lane check", "SERP check this topic", "is this in my lane",
-      or provides a topic + site URL and asks whether to create content about it. Also trigger
-      when someone provides a list of topics and asks which ones are worth pursuing.
-    inputs: [site-url, topic-or-query]
-    outputs: [content-validation-report]
-    chains_from: [volume-checker, serp-validator]
-    chains_to: [ai-seo-engine]
-    tools_used: [web_search, page-scraper]
-    tags: [seo, content-validation, ai-visibility, serp-analysis, topic-validation, lane-check]
-
-  - name: champion-page-consolidator
-    path: champion-page-consolidator/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: identifying cannibalization, auditing money pages, finding pages that
-      compete with each other, building a consolidation playbook, or determining which
-      pages to redirect. Always trigger when someone says "find cannibalization", "audit
-      my money pages", "champion page audit", "consolidate my pages", "kill cannibalizing
-      pages", "which pages are competing", "consolidation plan", "fix cannibalization",
-      "PageRank consolidation", "find pages stealing my rankings", or asks "why isn't my
-      SEO working" alongside a site that publishes lots of long-tail variants. Walks the
-      user through a guided GSC export workflow and produces a money-page-anchored
-      consolidation playbook with SERP-verified evidence.
-    inputs: [site-url, gsc-exports, money-pages]
-    outputs: [consolidation-playbook]
-    chains_from: []
-    chains_to: []
-    tools_used: [web_fetch, web_search]
-    tags: [seo, ai-seo, cannibalization, pagerank, consolidation, champion-pages]
-
-  - name: landscape-report-generator
-    path: landscape-report-generator/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: the target-market-landscape-analysis process reaches Step 8 (compile report),
-      or when a completed landscape analysis needs to be formatted into a branded Google Doc
-      deliverable. Produces a completed branded Target Market Landscape Report. Always trigger
-      when landscape report generation or report assembly for market analysis is requested.
-    inputs: [market-overview, competitor-profiles, differentiation-angle, proof-inventory]
-    outputs: [landscape-report-google-doc]
-    chains_from: [proof-catalog]
-    chains_to: []
-    tools_used: [gws-cli]
-    tags: [report-generation, google-docs, target-market-landscape, deliverable]
-
-  - name: satellite-content-produce
-    path: satellite-content-produce/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: producing satellite content for an Authority Satellite Network deployment.
-      Writes ready-to-paste content targeted at a specific sub-query, formatted for a specific
-      format class (Content / UGC / Video-long / Video-short / Social / Technical / Document),
-      with hub link and sibling bracket-token placeholders baked in. Always trigger when the
-      ASN deployment process needs satellite content for an off-site platform.
-    inputs: [sub-query, format-class, target-platform, hub-url, hub-summary, sibling-satellites, brand-context]
-    outputs: [satellite-content-package]
-    chains_from: [serp-fetch-and-classify]
-    chains_to: [satellite-publish]
-    tools_used: []
-    tags: [content-production, asn, satellite-network]
-
-  - name: serp-fetch-and-classify
-    path: serp-fetch-and-classify/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: analyzing SERP composition for a specific query — especially for ASN deployment,
-      competitive analysis, or sub-query viability checks. Fetches page 1 of Google and
-      classifies each result as owned-website or non-owned-platform, identifying the format
-      class when non-owned. Always trigger when a process needs to know whether off-site content
-      can rank for a query.
-    inputs: [sub-query, brand-domain]
-    outputs: [serp-classification-report]
-    chains_from: []
-    chains_to: [satellite-content-produce]
-    tools_used: [brave_search, web_search, web_fetch]
-    tags: [serp, classification, asn, satellite-network]
-
-  - name: sitemap-diff
-    path: sitemap-diff/SKILL.md
-    version: "1.0"
-    trigger: >
-      USE WHEN: discovering which hub pages on a site don't yet have satellites deployed —
-      especially for ASN cron eligibility checks, new-page discovery, or sitemap-driven
-      deployment. Pulls the site's sitemap, diffs against the ASN Tracker sheet, returns
-      candidate hub URLs ordered oldest-first by last-modified. Always trigger when sitemap
-      detection or hub-page eligibility checks are needed.
-    inputs: [site-root, tracker-sheet-id, tracker-tab-name, hub-url-column]
-    outputs: [eligible-hub-urls]
-    chains_from: []
-    chains_to: [satellite-content-produce]
-    tools_used: [page_scraper, web_fetch]
-    tags: [sitemap, asn, discovery, cron]
+    trigger: |
+      USE WHEN: user provides BOTH a video source (YouTube, Vimeo, Loom, direct MP4 — any video URL or file) AND a blog post (markdown, HTML, or URL), and wants frames from the video placed into the article. Always trigger on phrases like "screenshots from the video", "frames from the recording", "proof images from the video", "stills from the video", "add images from the video/loom/youtube", "replace the embedded video with screenshots". DO NOT USE FOR: screenshots of a live webpage/dashboard with no video involved, AI-generated illustration images, video trimming or editing, audio extraction, or plain transcription. Produces full-quality PNGs with SEO EXIF, section-matched placements, and timestamp-deeplinked anchor text back to the exact second of the video.
+    inputs:
+      - video-url
+      - blog-post
+    outputs:
+      - screenshots
+      - modified-blog-post
+      - manifest
+    chains_from:
+      - transcript-to-blog-post
+    chains_to:
+      - cms-wordpress
+      - cms-webflow
+      - cms-shopify
+    tools_used:
+      - yt-dlp
+      - ffmpeg
+      - exiftool
+      - piexif
+      - Pillow
+      - python3
+    tags:
+      - seo
+      - video
+      - screenshots
+      - content-pipeline
+      - exif
+      - youtube
+      - vimeo
+      - cms
