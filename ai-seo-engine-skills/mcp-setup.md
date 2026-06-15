@@ -98,12 +98,29 @@ The MCP server exposes 27 tools — everything the CLI can do:
 
 | Tool | Description |
 |------|-------------|
-| `content_list` | List content items in a project |
-| `content_create` | Create a new content item |
-| `content_update` | Update a content item |
+| `content_list` | List content items in a project. `limit` is a positive integer capped at 1000 (numeric — strings fail validation). |
+| `content_create` | Create a new content item. In addition to the basics (`projectId`, `name`, `status`, `contentType`, `slug`, `notes`), accepts the per-stage URLs and stage flag — see param notes below. After the API returns an ID, the tool re-queries the row to confirm it exists; a missing row throws "possible silent write failure, retry" rather than returning a phantom ID. |
+| `content_update` | Update a content item. Same expanded param set as `content_create`. Same post-write existence check on the supplied ID. |
 | `content_delete` | Delete content items |
 | `content_bulk_delete` | Delete multiple content items at once |
 | `content_bulk_import` | Bulk import content items from a list |
+
+**`content_create` / `content_update` — expanded params**
+
+In addition to the basic fields, both tools accept:
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `newOrExisting` | `"Existing"` \| `"New"` | Defaults to `"New"` on create when omitted |
+| `clearscopeLink` | URL | Clearscope report URL |
+| `fourPLink` | URL | 4P doc URL |
+| `contentBriefLink` | URL | Content Brief sheet URL |
+| `contentDocUrl` | URL | Generated content Google Doc URL |
+| `finalArticleUrl` | URL | Final article URL — the "Recommended URL" |
+| `driveFolderUrl` | URL | Drive folder URL for this item |
+| `recommendedUrl` | URL | **Alias for `finalArticleUrl`.** "Recommended URL" in Asana IS the Final Article URL — mapped to `finalArticleUrl` server-side before forwarding. Explicit `finalArticleUrl` wins if both are supplied. |
+
+Use these when ingesting from an external system (Asana, Notion, etc.) that already has these per-stage URLs populated, instead of dumping them into `notes`.
 
 ### Job Management
 

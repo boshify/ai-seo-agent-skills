@@ -101,14 +101,34 @@ aiseo content list --project proj_abc --status "Backlog" --pretty
 |------|----------|-------------|
 | `--project <id>` | Yes | Project ID |
 | `--keyword <keyword>` | Yes | Target keyword |
-| `--status <status>` | No | Workflow status (default: "backlog") |
+| `--name <name>` | No | Content name (defaults to keyword) |
+| `--status <status>` | No | Workflow status (default: "Backlog") |
 | `--category <name>` | No | Category name |
 | `--content-type <type>` | No | Content type name |
 | `--slug <slug>` | No | URL slug |
 | `--notes <notes>` | No | Notes |
+| `--new-or-existing <value>` | No | `Existing` or `New` (defaults to `New` when omitted) |
+| `--clearscope-link <url>` | No | Clearscope report URL |
+| `--four-p-link <url>` | No | 4P doc URL |
+| `--content-brief-link <url>` | No | Content Brief sheet URL |
+| `--content-doc-url <url>` | No | Generated content Google Doc URL |
+| `--final-article-url <url>` | No | Final article URL (the "Recommended URL") |
+| `--drive-folder-url <url>` | No | Drive folder URL for this item |
+| `--recommended-url <url>` | No | Alias for `--final-article-url`. "Recommended URL" in Asana IS the Final Article URL — mapped to `finalArticleUrl` before forwarding. Explicit `--final-article-url` wins if both are set. |
 
 ```bash
 aiseo content create --project proj_abc --keyword "best seo tools 2026" --category "Reviews"
+```
+
+Ingesting from an external system (e.g. Asana) with the per-stage URLs already populated:
+
+```bash
+aiseo content create \
+  --project proj_abc \
+  --keyword "online poker real money" \
+  --new-or-existing Existing \
+  --clearscope-link "https://app.clearscope.io/.../report/..." \
+  --recommended-url "https://example.com/online-poker-real-money/"
 ```
 
 ### `aiseo content update`
@@ -119,11 +139,21 @@ aiseo content create --project proj_abc --keyword "best seo tools 2026" --catego
 | `--status <status>` | No | New workflow status |
 | `--category <name>` | No | New category |
 | `--keyword <keyword>` | No | New keyword |
+| `--name <name>` | No | New name |
 | `--slug <slug>` | No | New slug |
 | `--notes <notes>` | No | New notes |
+| `--new-or-existing <value>` | No | `Existing` or `New` |
+| `--clearscope-link <url>` | No | Clearscope report URL |
+| `--four-p-link <url>` | No | 4P doc URL |
+| `--content-brief-link <url>` | No | Content Brief sheet URL |
+| `--content-doc-url <url>` | No | Generated content Google Doc URL |
+| `--final-article-url <url>` | No | Final article URL (the "Recommended URL") |
+| `--drive-folder-url <url>` | No | Drive folder URL for this item |
+| `--recommended-url <url>` | No | Alias for `--final-article-url`. Maps to `finalArticleUrl` before forwarding. |
 
 ```bash
 aiseo content update --id ci_123 --status "Production"
+aiseo content update --id ci_123 --new-or-existing Existing --clearscope-link "https://app.clearscope.io/..."
 ```
 
 ### `aiseo content delete`
