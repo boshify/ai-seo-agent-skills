@@ -138,8 +138,8 @@ Use these when ingesting from an external system (Asana, Notion, etc.) that alre
 |------|-------------|
 | `categories_list` | List categories for a project |
 | `categories_create` | Create a new category |
-| `config_get` | Get project configuration |
-| `config_set` | Update project configuration |
+| `config_get` | Get project configuration. Returns the 4Ps fields (`globalProblem`, `globalPromise`, `globalProof`, `globalProposition`) alongside legacy aliases (`globalPainPoints`, `globalBenefitsOffersCtas`, `globalTrustElements`) so older clients keep working for one release. |
+| `config_set` | Update project configuration. 4Ps fields are `globalProblem` / `globalPromise` / `globalProof` / `globalProposition` (canonical names). Legacy aliases `globalPainPoints` / `globalBenefitsOffersCtas` / `globalTrustElements` are still accepted server-side; canonical wins on conflict. See full param list via `documentation({ topic: "config" })`. |
 | `topical_map_generate` | Generate a topical authority map |
 | `content_types_list` | List available content type definitions |
 | `statuses_list` | List all workflow statuses |

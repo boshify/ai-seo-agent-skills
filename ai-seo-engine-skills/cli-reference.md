@@ -341,8 +341,16 @@ Update project configuration. Only pass fields you want to change.
 | `--project <projectId>` | **(required)** Project ID |
 | `--language <language>` | Content language (e.g. "English") |
 | `--country <country>` | Target country (e.g. "United States") |
+| `--industry <industry>` | Industry name (must match a row in /app/industry-style-guides) |
 | `--writing-style <style>` | Writing style/tone instructions |
-| `--writing-samples <samples>` | Example text to match writing style |
+| `--writing-samples <samples>` | Voice / style rules the writers and editors apply throughout the article |
+| `--global-problem <text>` | **(4Ps: Problem)** Project-wide pain points the brand addresses |
+| `--global-promise <text>` | **(4Ps: Promise)** Project-wide benefits, offers, and CTAs |
+| `--global-proof <text>` | **(4Ps: Proof)** Project-wide trust signals (awards, certifications, social proof) |
+| `--global-proposition <text>` | **(4Ps: Proposition)** Project-wide proposition / positioning statement |
+| `--global-pain-points <text>` | DEPRECATED alias for `--global-problem`. Server still accepts it; prefer the new name. |
+| `--global-benefits-offers-ctas <text>` | DEPRECATED alias for `--global-promise`. |
+| `--global-trust-elements <text>` | DEPRECATED alias for `--global-proof`. |
 | `--image-style-guide <guide>` | Guidelines for AI image generation |
 | `--source-context <context>` | Background info about the brand/product |
 | `--central-entity <entity>` | Central entity/brand name for topical authority |
@@ -351,18 +359,23 @@ Update project configuration. Only pass fields you want to change.
 | `--outer-section <section>` | Outer section of the topical map |
 | `--write-to-core <bool>` | Enable writing to core section (true/false) |
 | `--write-to-outer <bool>` | Enable writing to outer section (true/false) |
+| `--word-count-minimum <n>` | Per-client minimum article word count (overrides the global floor) |
+| `--word-count-maximum <n>` | Per-client maximum article word count (overrides the global ceiling) |
 | `--automation-settings <json>` | Automation settings as JSON string |
+
+**4Ps order is Problem → Promise → Proof → Proposition.** That's the order the operator-facing /app/config UI displays the fields, and the order they appear in the agent context blocks. The old `--global-trust-elements` / `--global-benefits-offers-ctas` / `--global-pain-points` flags map transparently to their new names server-side for one release; new automations should use the canonical names.
 
 **Examples:**
 ```bash
-# Set brand context
-aiseo config set --project proj_abc --central-entity "Acme Corp" --source-context "Leading provider of widgets since 1990"
+# Set 4Ps for a project
+aiseo config set --project proj_abc \
+  --global-problem "Players hate slow withdrawals and unclear bonus terms" \
+  --global-promise "Same-day crypto payouts; bonus terms shown before opt-in" \
+  --global-proof "Trustpilot 4.2 / 11,891 reviews; 35+ years of operation; segregated player funds" \
+  --global-proposition "The fastest, most transparent online casino for US players"
 
-# Set writing style with samples
-aiseo config set --project proj_abc --writing-style "Professional, authoritative" --writing-samples "We believe in quality..."
-
-# Set topical map sections
-aiseo config set --project proj_abc --core-section "Widgets" --outer-section "Industrial Equipment"
+# Read current 4Ps
+aiseo config get --project proj_abc --field globalProof
 ```
 
 ---
