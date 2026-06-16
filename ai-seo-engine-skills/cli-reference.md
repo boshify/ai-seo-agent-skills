@@ -460,3 +460,109 @@ Then use `gws` for file operations:
 ```bash
 gws drive files list --params '{"q": "\"1ABC_drivefolderid\" in parents"}'
 ```
+
+---
+
+## prompts
+
+Tenant-scoped editorial prompts the workflow runners load at runtime. Two row kinds:
+
+- **Core prompts** (`isCore=true`, `kind=core`): wired into the runners by stable `key` (e.g. `cg.writer-hard-rules`). Body / description / sortOrder are editable. Name / key / section / kind / isCore / injectionPoint are immutable. Cannot be deleted — wipe the body to empty string (`--prompt ''`) to fall back to the registry default.
+- **Custom prompts** (`isCore=false`, `kind=custom`): user-added. Full CRUD. Must declare an `injectionPoint` enum value naming where the runner appends the body.
+
+### `aiseo prompts list`
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--section <section>` | No | Filter by section: `4P`, `CB`, `CG`, `Global` |
+| `--kind <kind>` | No | Filter by kind: `core`, `custom` |
+| `--slim` | No | Drop the `systemPrompt` body from each row (keep metadata only). Recommended for inspecting many rows at once. |
+
+```bash
+# All prompts, full bodies
+aiseo prompts list --pretty
+
+# Metadata only — see which prompts exist, their keys, and char counts
+aiseo prompts list --slim --pretty
+
+# Just the custom rows in CG
+aiseo prompts list --section CG --kind custom --slim
+```
+
+### `aiseo prompts get`
+
+Fetch one prompt's full body. Look up by `--id` OR `--key` (exactly one).
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--id <id>` | One of | Prompt cuid |
+| `--key <key>` | One of | Stable slug (e.g. `cg.writer-hard-rules`) |
+
+```bash
+aiseo prompts get --key cg.writer-hard-rules --pretty
+
+# Pipe just the body to a file
+aiseo prompts get --key cg.writer-hard-rules --field systemPrompt > writer-hard-rules.txt
+```
+
+### `aiseo prompts create`
+
+Create a custom prompt. The API enforces `kind=custom`; core prompts are seeded from the in-code registry, not via this tool.
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--section <section>` | Yes | `4P`, `CB`, `CG`, or `Global` |
+| `--name <name>` | Yes | Display name shown in the UI |
+| `--prompt <body>` | Yes | The body text the runner will append at the injection point |
+| `--injection-point <point>` | Yes | One of: `4p.all-agents`, `cb.outline.extras`, `cb.qa.extras`, `cb.writer-instructions.extras`, `cb.brief-sections.extras`, `cg.writer.extras`, `cg.section-editor.extras`, `cg.surgical-edit.extras` |
+| `--description <description>` | No | One-line operator hint |
+| `--key <key>` | No | Override auto-derived slug. Immutable once set. |
+| `--sort-order <n>` | No | UI ordering (integer; smaller numbers appear first) |
+
+```bash
+aiseo prompts create \
+  --section CG \
+  --name "BetOnline domain casing" \
+  --prompt "Always write 'BetOnline.ag' with that exact casing, never 'betonline.ag' or 'BetOnline'." \
+  --injection-point cg.writer.extras \
+  --description "Brand-name casing rule for the BetOnline project"
+```
+
+### `aiseo prompts update`
+
+Partial update by id. Send only the fields you want to change. Body changes are versioned (audit-trail) via the existing capture pipeline — pass `--note` to annotate.
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--id <id>` | Yes | Prompt cuid |
+| `--prompt <body>` | No | New system prompt body |
+| `--description <description>` | No | New one-line description (`""` clears) |
+| `--sort-order <n>` | No | New UI sort order |
+| `--name <name>` | No | New display name (rejected on core rows) |
+| `--section <section>` | No | New section (rejected on core rows) |
+| `--injection-point <point>` | No | New injection point (rejected on core rows) |
+| `--note <note>` | No | Audit note attached to the version capture |
+
+```bash
+# Edit a core prompt's body
+aiseo prompts update --id cm1234... --prompt "$(cat new-writer-hard-rules.txt)" \
+  --note "Tightened the em-dash language after editorial feedback"
+
+# Disable a core rule (runner falls back to registry default + logs a warning)
+aiseo prompts update --id cm1234... --prompt "" --note "Disabled while tuning"
+
+# Rename a custom prompt
+aiseo prompts update --id cm5678... --name "Cleopatra slot variants"
+```
+
+### `aiseo prompts delete`
+
+Delete a custom prompt. Core prompts reject delete — to disable a core prompt, `update --prompt ''` instead and the runner falls back to the registry default.
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--id <id>` | Yes | Prompt cuid |
+
+```bash
+aiseo prompts delete --id cm5678...
+```

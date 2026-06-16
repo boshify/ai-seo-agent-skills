@@ -147,6 +147,50 @@ Use these when ingesting from an external system (Asana, Notion, etc.) that alre
 | `drive_folder` | Get Google Drive folder ID for a project |
 | `content_export_doc` | Export a Google Doc as clean markdown for CMS publishing |
 
+### Prompt Database
+
+Tenant-scoped editorial prompts the workflow runners load at runtime. Two row kinds: **core** (registry-wired, body-only editable, undeletable) and **custom** (user-added at named injection points, full CRUD).
+
+| Tool | Description |
+|------|-------------|
+| `prompts_list` | List every prompt in the tenant (filter by `section` 4P\|CB\|CG\|Global, or by `kind` core\|custom). Returns slim metadata; use `prompts_get` for bodies. |
+| `prompts_get` | Fetch one prompt's full body by `id` or by stable `key` (e.g. `cg.writer-hard-rules`). |
+| `prompts_create` | Create a custom prompt. Requires `section`, `name`, `systemPrompt`, and `injectionPoint`. Always becomes `kind=custom` (core rows are seeded from the in-code registry, not via this tool). |
+| `prompts_update` | Partial update by `id`. Core rows accept `systemPrompt` / `description` / `sortOrder` only; custom rows accept the full field set. Body changes are versioned (audit-trail). |
+| `prompts_delete` | Delete a custom prompt. Core prompts reject delete — wipe `systemPrompt` to `""` to fall back to the registry default instead. |
+
+**Valid `injectionPoint` values** per section:
+
+| Section | Injection points |
+|---------|------------------|
+| 4P | `4p.all-agents` |
+| CB | `cb.outline.extras`, `cb.qa.extras`, `cb.writer-instructions.extras`, `cb.brief-sections.extras` |
+| CG | `cg.writer.extras`, `cg.section-editor.extras`, `cg.surgical-edit.extras` |
+
+**Typical workflows:**
+
+```
+# Inspect what's wired
+prompts_list({ kind: "core" })
+
+# Read one body
+prompts_get({ key: "cg.writer-hard-rules" })
+
+# Add a custom rule the writer agent will see
+prompts_create({
+  section: "CG",
+  name: "BetOnline domain casing",
+  systemPrompt: "Always write 'BetOnline.ag' with that exact casing.",
+  injectionPoint: "cg.writer.extras"
+})
+
+# Tweak a core rule's body (auto-captures a version)
+prompts_update({ id: "cm...", systemPrompt: "...edited...", note: "Tightened the em-dash language" })
+
+# Disable a core rule (runner falls back to registry default + logs a warning)
+prompts_update({ id: "cm...", systemPrompt: "", note: "Disabled while tuning" })
+```
+
 ## Example Conversations
 
 ### List projects
